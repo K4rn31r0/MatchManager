@@ -498,3 +498,6 @@ Issues e specs ficam em arquivos Markdown locais em `.scratch/`. Consulte `docs/
 ### Domain docs
 
 Repositório de contexto único, com `GLOSSARY.md` na raiz e `docs/adr/`. Consulte `docs/agents/domain.md`.
+
+Qualquer ação significativa deve ser documentada, no formato de um pequeno parágrafo, em um arquivo sequencial `/docs/agents/prompt-history.md`. 
+Inclua o prompt que gerou a ação junto da documentação do que foi feito (em uma entrada no arquivo prompt-history.md).
