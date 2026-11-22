@@ -488,3 +488,13 @@ Never mark an issue as complete merely because the implementation has been start
 - Do not migrate local issues to GitHub Issues.
 - Do not assume that GitHub Pull Requests or GitHub Projects are part of the issue-tracking workflow.
 - Do not delete issue history unless explicitly requested.
+
+## Agent skills
+
+### Issue tracker
+
+Issues e specs ficam em arquivos Markdown locais em `.scratch/`. Consulte `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Repositório de contexto único, com `GLOSSARY.md` na raiz e `docs/adr/`. Consulte `docs/agents/domain.md`.
