@@ -441,3 +441,50 @@ Before modifying existing code:
 When an architectural decision is unclear, prioritize simplicity, separation of concerns, testability, and consistency with the existing architecture.
 
 When requirements are incomplete, ask for clarification instead of inventing business rules.
+
+# 13. Local Issue Tracking
+
+## 13.1. Issue Tracker
+
+The project uses a **local Markdown-based issue tracker**.
+
+- Issue specifications and tracking files must be stored locally under `.scratch/`.
+- Do not use GitHub Issues to create, retrieve, update, or close issues.
+- Do not use the GitHub CLI (`gh`) for issue tracking operations.
+- These restrictions apply even if the Git remote points to a GitHub repository.
+- GitHub remains the remote repository hosting platform, but it is not used as the project's issue tracker.
+
+## 13.2. Issue Documentation
+
+Follow the conventions documented in:
+
+`docs/agents/issue-tracker.md`
+
+This document defines how issues are structured, organized, updated, and closed.
+
+Before creating or modifying issues:
+1. Read `docs/agents/issue-tracker.md`.
+2. Inspect the existing files under `.scratch/`.
+3. Follow the established naming and organization conventions.
+4. Avoid duplicating existing issues.
+
+## 13.3. Issue Lifecycle
+
+When working on an existing issue:
+- Read its description and acceptance criteria before implementing changes.
+- Keep the issue documentation synchronized with implementation progress.
+- Do not mark an issue as complete if its acceptance criteria have not been satisfied.
+
+When an issue is completed:
+1. Mark all satisfied acceptance criteria with `[x]`.
+2. Update its `Status` field to `done`.
+3. Ensure the documentation accurately reflects the implemented functionality.
+
+Never mark an issue as complete merely because the implementation has been started or because its tests have been written.
+
+## 13.4. Scope and Restrictions
+
+- Issue tracking is local and file-based.
+- Do not migrate local issues to GitHub Issues.
+- Do not assume that GitHub Pull Requests or GitHub Projects are part of the issue-tracking workflow.
+- Do not delete issue history unless explicitly requested.
