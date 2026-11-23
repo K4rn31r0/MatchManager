@@ -38,6 +38,10 @@ from server.infrastructure.db.json_registration_repository import (
 from server.infrastructure.db.json_match_repository import JsonMatchRepository
 from server.core.use_cases.configure_round_robin import ConfigureRoundRobin
 from server.core.use_cases.generate_round_robin_calendar import GenerateRoundRobinCalendar
+from server.core.use_cases.record_round_robin_result import RecordRoundRobinResult
+from server.core.use_cases.calculate_round_robin_standings import CalculateRoundRobinStandings
+from server.core.use_cases.finish_round_robin_tournament import FinishRoundRobinTournament
+from server.core.use_cases.list_round_robin_matches import ListRoundRobinMatches
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_FILE = PROJECT_ROOT / "instance" / "matchmanager.json"
@@ -88,6 +92,24 @@ def create_app(data_file: Path | None = None) -> Flask:
             generate_round_robin_calendar=GenerateRoundRobinCalendar(
                 tournament_repository,
                 registration_repository,
+                match_repository,
+            ),
+            record_round_robin_result=RecordRoundRobinResult(
+                tournament_repository,
+                match_repository,
+            ),
+            calculate_round_robin_standings=CalculateRoundRobinStandings(
+                tournament_repository,
+                team_repository,
+                registration_repository,
+                match_repository,
+            ),
+            finish_round_robin_tournament=FinishRoundRobinTournament(
+                tournament_repository,
+                match_repository,
+            ),
+            list_round_robin_matches=ListRoundRobinMatches(
+                tournament_repository,
                 match_repository,
             ),
         )

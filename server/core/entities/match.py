@@ -1,12 +1,18 @@
 """Domain entity for tournament matches."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
 
 class MatchStatus(Enum):
     PENDING = "pending"
     COMPLETED = "completed"
+
+
+class MatchResult(Enum):
+    FIRST_WIN = "first_win"
+    DRAW = "draw"
+    SECOND_WIN = "second_win"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -17,3 +23,37 @@ class Match:
     first_team_id: str
     second_team_id: str
     status: MatchStatus = MatchStatus.PENDING
+    result: MatchResult | None = None
+    first_score: int | None = None
+    second_score: int | None = None
+    first_team_stats: dict[str, int] | None = None
+    second_team_stats: dict[str, int] | None = None
+
+    def record_result(
+        self,
+        *,
+        result: MatchResult,
+        first_score: int | None,
+        second_score: int | None,
+        first_team_stats: dict[str, int] | None,
+        second_team_stats: dict[str, int] | None,
+    ) -> "Match":
+        if (first_score is None) != (second_score is None):
+            raise ValueError("placar completo")
+        if first_score is not None and second_score is not None:
+            inferred = (
+                MatchResult.FIRST_WIN if first_score > second_score
+                else MatchResult.SECOND_WIN if second_score > first_score
+                else MatchResult.DRAW
+            )
+            if inferred is not result:
+                raise ValueError("placar não corresponde ao resultado")
+        return replace(
+            self,
+            status=MatchStatus.COMPLETED,
+            result=result,
+            first_score=first_score,
+            second_score=second_score,
+            first_team_stats=dict(first_team_stats or {}),
+            second_team_stats=dict(second_team_stats or {}),
+        )

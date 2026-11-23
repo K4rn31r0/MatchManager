@@ -62,6 +62,80 @@
   </form>
 </section>
 {% endif %}
+{% if tournament.format_label == 'Pontos corridos' and matches %}
+<section class="card">
+  <h2>Partidas</h2>
+  {% for match in matches %}
+    {% set first_team = namespace(name=match.first_team_id) %}
+    {% set second_team = namespace(name=match.second_team_id) %}
+    {% for team in registered %}
+      {% if team.id == match.first_team_id %}{% set first_team.name = team.name %}{% endif %}
+      {% if team.id == match.second_team_id %}{% set second_team.name = team.name %}{% endif %}
+    {% endfor %}
+    <article>
+      <h3>{{ first_team.name }} × {{ second_team.name }}</h3>
+      <p>Rodada {{ match.round_number }} · {% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
+      {% if tournament.status != 'draft' %}
+      <form method="post" action="{{ url_for('tournaments.record_round_robin_result_route', tournament_id=tournament.id, match_id=match.id) }}">
+        <label>Resultado
+          <select name="result">
+            <option value="first_win"{% if match.result and match.result.value == 'first_win' %} selected{% endif %}>Vitória de {{ first_team.name }}</option>
+            <option value="draw"{% if match.result and match.result.value == 'draw' %} selected{% endif %}>Empate</option>
+            <option value="second_win"{% if match.result and match.result.value == 'second_win' %} selected{% endif %}>Vitória de {{ second_team.name }}</option>
+          </select>
+        </label>
+        <label>Placar de {{ first_team.name }} <input name="first_score" type="number" min="0" value="{{ match.first_score if match.first_score is not none else '' }}"></label>
+        <label>Placar de {{ second_team.name }} <input name="second_score" type="number" min="0" value="{{ match.second_score if match.second_score is not none else '' }}"></label>
+        {% if tournament.round_robin %}
+          {% for field in tournament.round_robin.statistic_fields %}
+            <label>{{ first_team.name }} — {{ field.name }} <input name="first_stat_{{ field.name }}" type="number" value="{{ match.first_team_stats[field.name] if match.first_team_stats and field.name in match.first_team_stats else '' }}"></label>
+            <label>{{ second_team.name }} — {{ field.name }} <input name="second_stat_{{ field.name }}" type="number" value="{{ match.second_team_stats[field.name] if match.second_team_stats and field.name in match.second_team_stats else '' }}"></label>
+          {% endfor %}
+        {% endif %}
+        <button class="button" type="submit">Salvar resultado</button>
+      </form>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+{% endif %}
+{% if standings and tournament.status != 'draft' %}
+<section class="card">
+  <h2>Classificação</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Posição</th><th>Equipe</th><th>Jogos</th><th>Vitórias</th><th>Empates</th><th>Derrotas</th><th><strong>Pontos</strong></th>
+        {% if tournament.round_robin %}
+          {% for field in tournament.round_robin.statistic_fields %}<th>{{ field.name }}</th>{% endfor %}
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in standings.rows %}
+      <tr{% if champion_team_id == row.team.id %} class="champion"{% endif %}>
+        <td>{{ row.position }}</td>
+        <td>{{ row.team.name }}</td>
+        <td>{{ row.played }}</td>
+        <td>{{ row.wins }}</td>
+        <td>{{ row.draws }}</td>
+        <td>{{ row.losses }}</td>
+        <td><strong>{{ row.points }}</strong></td>
+        {% if tournament.round_robin %}
+          {% for field in tournament.round_robin.statistic_fields %}<td>{{ row.statistics[field.name] if field.name in row.statistics else '' }}</td>{% endfor %}
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if tournament.status == 'in_progress' %}
+  <form method="post" action="{{ url_for('tournaments.finish_round_robin_tournament_route', tournament_id=tournament.id) }}">
+    <button class="button" type="submit">Encerrar torneio</button>
+  </form>
+  {% endif %}
+  {% if champion_team_id %}<p><strong>Campeão: {{ standings.rows[0].team.name }}</strong></p>{% endif %}
+</section>
+{% endif %}
 <section class="card">
   <h2>Equipes inscritas: {{ tournament.participant_count }}</h2>
   {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
