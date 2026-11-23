@@ -15,6 +15,9 @@ from server.api.controllers.tournament_controller import (
 )
 from server.core.use_cases.create_team import CreateTeam
 from server.core.use_cases.create_tournament import CreateTournament
+from server.core.use_cases.delete_tournament import DeleteTournament
+from server.core.use_cases.get_tournament import GetTournament
+from server.core.use_cases.update_tournament import UpdateTournament
 from server.core.use_cases.delete_team import DeleteTeam
 from server.core.use_cases.get_team import GetTeam
 from server.core.use_cases.list_teams import ListTeams
@@ -57,6 +60,9 @@ def create_app(data_file: Path | None = None) -> Flask:
                 clock=datetime.now,
             ),
             list_tournaments=ListTournaments(tournament_repository),
+            get_tournament=GetTournament(tournament_repository),
+            update_tournament=UpdateTournament(tournament_repository, datetime.now),
+            delete_tournament=DeleteTournament(tournament_repository),
         )
     )
     app.register_blueprint(

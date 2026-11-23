@@ -34,3 +34,7 @@ class TeamNotFoundError(DomainError):
 
 class TeamInStartedTournamentError(DomainError):
     """The team cannot be removed while it plays a started tournament."""
+
+
+class TournamentNotFoundError(DomainError):
+    """No tournament exists with the requested id."""

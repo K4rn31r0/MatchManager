@@ -11,58 +11,47 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('tournaments.create') }}" class="form">
-    <label>
-      Nome
-      <input type="text" name="name" value="{{ form.get('name', '') }}" required>
-    </label>
-
-    <label>
-      Formato
-      <select name="format" required>
-        <option value="">Selecione…</option>
-        {% for option, label in format_options.items() %}
-        <option value="{{ option.value }}" {% if form.get('format') == option.value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </label>
-
-    <label>
-      Modalidade <span class="hint">(opcional)</span>
-      <input type="text" name="modality" value="{{ form.get('modality', '') }}" placeholder="Ex.: Futsal">
-    </label>
-
-    <div class="form-row">
-      <label>
-        Início <span class="hint">(opcional)</span>
-        <input type="date" name="start_date" value="{{ form.get('start_date', '') }}">
-      </label>
-      <label>
-        Término <span class="hint">(opcional)</span>
-        <input type="date" name="end_date" value="{{ form.get('end_date', '') }}">
-      </label>
-    </div>
-
+    {% include 'tournaments/_fields.html' %}
     <button type="submit">Criar torneio</button>
   </form>
 </section>
 
 <section>
   <h2>Torneios</h2>
+  <form method="get" class="form">
+    <label>Buscar por nome <input type="search" name="q" value="{{ search }}"></label>
+    <label>Status
+      <select name="status">
+        <option value="">Todos</option>
+        {% for option, label in status_options.items() %}
+        <option value="{{ option.value }}"{% if status == option.value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Ordenar por
+      <select name="order">
+        {% for value, label in [('activity', 'Atividade recente'), ('name', 'Nome'), ('format', 'Formato'), ('status', 'Status')] %}
+        <option value="{{ value }}"{% if order == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Aplicar</button>
+  </form>
   {% if tournaments %}
   <ul class="tournament-list">
     {% for tournament in tournaments %}
     <li class="card tournament">
       <div class="tournament-header">
-        <strong>{{ tournament.name }}</strong>
+        <strong><a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}" style="white-space: pre-wrap">{{ tournament.name }}</a></strong>
         <span class="badge badge-{{ tournament.status }}">{{ tournament.status_label }}</span>
       </div>
       <p class="meta">{{ tournament.format_label }} · {{ tournament.modality }}</p>
-      <p class="meta">{{ tournament.period }}</p>
+      <p class="meta">{{ tournament.period }} · Equipes inscritas: {{ tournament.participant_count }}</p>
     </li>
     {% endfor %}
   </ul>
   {% else %}
-  <p class="empty">Nenhum torneio cadastrado ainda. Crie o primeiro acima.</p>
+  <p class="empty">Nenhum torneio encontrado.</p>
   {% endif %}
 </section>
 {% endblock %}

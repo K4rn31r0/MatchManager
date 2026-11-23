@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Editar torneio</h1>
+  {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="form">
+    {% include 'tournaments/_fields.html' %}
+    <button type="submit">Salvar alterações</button>
+    <a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}
