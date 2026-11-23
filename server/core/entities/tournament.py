@@ -97,6 +97,12 @@ class Tournament:
             end_date=end_date,
         )
 
+    def ensure_registrations_open(self) -> None:
+        if self.status is not TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível alterar inscrições em torneios em rascunho."
+            )
+
     def has_equivalent_name(self, name: str) -> bool:
         """Tell whether a name clashes with this tournament's name.
 

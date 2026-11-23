@@ -31,7 +31,7 @@
     {% endfor %}
   </ul>
   {% elif search %}
-  <p class="empty">Nenhuma equipe encontrada para “{{ search }}”. <a href="{{ url_for('teams.index') }}">Limpar busca</a></p>
+  <p class="empty">Nenhuma equipe encontrada para “{{ search }}”. <a class="button button-secondary" href="{{ url_for('teams.index') }}">Limpar busca</a></p>
   {% else %}
   <p class="empty">Nenhuma equipe cadastrada ainda. Crie a primeira acima.</p>
   {% endif %}

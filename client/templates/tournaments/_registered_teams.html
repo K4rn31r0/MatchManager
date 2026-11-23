@@ -1,0 +1,16 @@
+{% if registered %}
+<ul class="item-list registered-teams">
+  {% for team in registered %}
+  <li class="registered-team">
+    <a class="button button-secondary registered-team-name" href="{{ url_for('teams.detail', team_id=team.id) }}">{{ team.name }}</a>
+    {% if can_remove %}
+    <form method="post" action="{{ url_for('tournaments.remove_registration', tournament_id=tournament.id, team_id=team.id) }}">
+      <button type="submit" aria-label="Remover {{ team.name }}">Remover inscrição</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Nenhuma equipe inscrita.</p>
+{% endif %}

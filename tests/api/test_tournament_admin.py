@@ -20,7 +20,7 @@ def test_tournament_admin_flow(tmp_path):
             {"tournament_id": "other", "team_id": "a"},
         ]
         document["matches"] = [{"tournament_id": tournament_id}]
-        document["teams"] = [{"id": "a"}]
+        document["teams"] = [{"id": "a", "name": "Águias"}]
         path.write_text(json.dumps(document))
 
         address = f"/tournaments/{tournament_id}"
@@ -47,4 +47,21 @@ def test_tournament_admin_flow(tmp_path):
     assert document["tournaments"] == []
     assert document["matches"] == []
     assert document["registrations"] == [{"tournament_id": "other", "team_id": "a"}]
-    assert document["teams"] == [{"id": "a"}]
+    assert document["teams"] == [{"id": "a", "name": "Águias"}]
+
+
+def test_new_tournament_form_opens_from_list_and_keeps_invalid_input(tmp_path):
+    client = create_app(tmp_path / "data.json").test_client()
+    index = client.get("/").get_data(as_text=True)
+    assert 'href="/tournaments/new"' in index
+    assert 'name="name"' not in index
+
+    form = client.get("/tournaments/new").get_data(as_text=True)
+    assert 'action="/tournaments"' in form
+    assert 'name="name"' in form
+
+    response = client.post("/tournaments", data={"name": "Copa"})
+    assert response.status_code == 400
+    form = response.get_data(as_text=True)
+    assert 'value="Copa"' in form
+    assert "Escolha o formato do torneio." in form

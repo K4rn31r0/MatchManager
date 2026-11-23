@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Inscrever novas equipes · MatchManager{% endblock %}
+{% block content %}
+<p><a class="button button-secondary" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">← {{ tournament.name }}</a></p>
+<h1>Inscrever novas equipes</h1>
+{% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+{% if tournament.status == 'draft' %}
+<section class="card">
+  <h2>Equipes disponíveis</h2>
+  {% if available %}
+  <form method="post" action="{{ url_for('registrations.add', tournament_id=tournament.id) }}" class="form">
+    <label>
+      Equipe
+      <select name="team_id" required>
+        <option value="">Selecione…</option>
+        {% for team in available %}<option value="{{ team.id }}">{{ team.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit">Inscrever equipe</button>
+  </form>
+  {% else %}
+  <p>Nenhuma equipe disponível.</p>
+  {% endif %}
+</section>
+<section class="card">
+  <h2>Criar equipe</h2>
+  {% with action=url_for('registrations.create', tournament_id=tournament.id), submit_label='Criar e inscrever equipe', error=None %}
+  {% include 'teams/_form.html' %}
+  {% endwith %}
+</section>
+{% else %}
+<p>Inscrições encerradas.</p>
+{% endif %}
+{% endblock %}

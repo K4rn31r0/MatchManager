@@ -3,22 +3,12 @@
 {% block title %}Torneios · MatchManager{% endblock %}
 
 {% block content %}
-<section class="card">
-  <h1>Novo torneio</h1>
-
-  {% if error %}
-  <p class="alert" role="alert">{{ error }}</p>
-  {% endif %}
-
-  <form method="post" action="{{ url_for('tournaments.create') }}" class="form">
-    {% include 'tournaments/_fields.html' %}
-    <button type="submit">Criar torneio</button>
-  </form>
-</section>
-
 <section>
-  <h2>Torneios</h2>
-  <form method="get" class="form">
+  <div class="tournament-header">
+    <h1>Torneios</h1>
+    <a class="button" href="{{ url_for('tournaments.new') }}">Novo torneio</a>
+  </div>
+  <form method="get" class="form tournament-filters">
     <label>Buscar por nome <input type="search" name="q" value="{{ search }}"></label>
     <label>Status
       <select name="status">
@@ -40,13 +30,15 @@
   {% if tournaments %}
   <ul class="tournament-list">
     {% for tournament in tournaments %}
-    <li class="card tournament">
-      <div class="tournament-header">
-        <strong><a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}" style="white-space: pre-wrap">{{ tournament.name }}</a></strong>
-        <span class="badge badge-{{ tournament.status }}">{{ tournament.status_label }}</span>
-      </div>
-      <p class="meta">{{ tournament.format_label }} · {{ tournament.modality }}</p>
-      <p class="meta">{{ tournament.period }} · Equipes inscritas: {{ tournament.participant_count }}</p>
+    <li>
+      <a class="card tournament-link" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">
+        <div class="tournament-header">
+          <strong class="tournament-name">{{ tournament.name }}</strong>
+          <span class="badge badge-{{ tournament.status }}">{{ tournament.status_label }}</span>
+        </div>
+        <p class="meta">{{ tournament.format_label }} · {{ tournament.modality }}</p>
+        <p class="meta">{{ tournament.period }} · Equipes inscritas: {{ tournament.participant_count }}</p>
+      </a>
     </li>
     {% endfor %}
   </ul>

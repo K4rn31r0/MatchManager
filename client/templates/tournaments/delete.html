@@ -6,7 +6,7 @@
   <form method="post" class="form">
     <p>Excluir “{{ tournament.name }}” e suas inscrições e partidas?</p>
     <button type="submit" name="confirmed" value="yes">Confirmar exclusão</button>
-    <a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
+    <a class="button button-secondary" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
   </form>
 </section>
 {% endblock %}

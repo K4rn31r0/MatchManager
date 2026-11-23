@@ -111,10 +111,35 @@ button {
   border-radius: 8px;
 }
 
+.tournament-filters {
+  margin-bottom: 20px;
+}
+
 .tournament-list {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.tournament-link {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tournament-link:hover,
+.tournament-link:focus-visible {
+  border-color: var(--primary);
+}
+
+.tournament-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.tournament-name {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .tournament-header {
@@ -213,6 +238,31 @@ button {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.registration-actions {
+  margin-top: 16px;
+}
+
+.registered-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.registered-team + .registered-team {
+  margin-top: 8px;
+}
+
+.registered-team-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.registered-team form {
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .team-item {

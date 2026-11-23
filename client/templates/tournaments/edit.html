@@ -6,7 +6,7 @@
   <form method="post" class="form">
     {% include 'tournaments/_fields.html' %}
     <button type="submit">Salvar alterações</button>
-    <a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
+    <a class="button button-secondary" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
   </form>
 </section>
 {% endblock %}

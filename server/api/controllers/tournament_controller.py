@@ -5,6 +5,7 @@ from datetime import date
 from flask import Blueprint, redirect, render_template, request, url_for
 from werkzeug.datastructures import MultiDict
 
+from server.api.presenters.team_presenter import present_teams
 from server.api.presenters.tournament_presenter import (
     FORMAT_LABELS,
     STATUS_LABELS,
@@ -21,6 +22,7 @@ from server.core.use_cases.delete_tournament import DeleteTournament
 from server.core.use_cases.get_tournament import GetTournament
 from server.core.use_cases.update_tournament import UpdateTournament
 from server.core.use_cases.list_tournaments import ListTournaments
+from server.core.use_cases.tournament_registrations import TournamentRegistrations
 
 
 class InvalidFormError(Exception):
@@ -35,6 +37,7 @@ def create_tournament_blueprint(
     create_tournament: CreateTournament,
     list_tournaments: ListTournaments,
     get_tournament: GetTournament,
+    registrations: TournamentRegistrations,
     update_tournament: UpdateTournament,
     delete_tournament: DeleteTournament,
 ) -> Blueprint:
@@ -45,10 +48,8 @@ def create_tournament_blueprint(
     def not_found(error: TournamentNotFoundError):
         return render_template("not_found.html", message=error.message), 404
 
-    def render_index(
-        form: MultiDict[str, str] | None = None,
-        error: str | None = None,
-    ) -> str:
+    @blueprint.get("/")
+    def index() -> str:
         search = request.args.get("q", "")
         status_value = request.args.get("status", "")
         status = next(
@@ -66,32 +67,53 @@ def create_tournament_blueprint(
                 list_tournaments.execute(search, status, order),
                 list_tournaments.participant_counts(),
             ),
+        )
+
+    def render_new(
+        form: MultiDict[str, str] | None = None,
+        error: str | None = None,
+    ) -> str:
+        return render_template(
+            "tournaments/new.html",
             format_options=FORMAT_LABELS,
-            form=form or MultiDict(),
+            form=form if form is not None else MultiDict(),
             error=error,
         )
 
-    @blueprint.get("/")
-    def index() -> str:
-        return render_index()
+    @blueprint.get("/tournaments/new")
+    def new() -> str:
+        return render_new()
 
     @blueprint.post("/tournaments")
     def create():
         try:
             create_tournament.execute(_parse_create_form(request.form))
         except (InvalidFormError, DomainError) as error:
-            return render_index(form=request.form, error=error.message), 400
+            return render_new(form=request.form, error=error.message), 400
         return redirect(url_for("tournaments.index"))
+
+    def render_detail(tournament_id: str, error: str | None = None) -> str:
+        teams = registrations.list(tournament_id)
+        return render_template(
+            "tournaments/detail.html",
+            tournament=present_tournament(teams.tournament, len(teams.registered)),
+            registered=present_teams(teams.registered),
+            error=error,
+        )
 
     @blueprint.get("/tournaments/<tournament_id>")
     def detail(tournament_id: str) -> str:
-        tournament = get_tournament.execute(tournament_id)
-        return render_template(
-            "tournaments/detail.html",
-            tournament=present_tournament(
-                tournament, list_tournaments.participant_counts().get(tournament_id, 0)
-            ),
-        )
+        return render_detail(tournament_id)
+
+    @blueprint.post("/tournaments/<tournament_id>/teams/<team_id>/remove")
+    def remove_registration(tournament_id: str, team_id: str):
+        try:
+            registrations.remove(tournament_id, team_id)
+        except TournamentNotFoundError:
+            raise
+        except DomainError as error:
+            return render_detail(tournament_id, error.message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
 
     @blueprint.route("/tournaments/<tournament_id>/edit", methods=["GET", "POST"])
     def edit(tournament_id: str):

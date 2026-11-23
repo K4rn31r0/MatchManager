@@ -59,3 +59,15 @@ Registro sequencial das ações significativas realizadas com apoio de IA, com o
 > Sim, faça o commit da 03
 
 **O que foi feito:** Implementei consulta, busca, filtros, ordenação, edição em rascunho e exclusão confirmada nos três status, incluindo remoção de inscrições e partidas no mesmo arquivo JSON. O nome continua preservando grafia, acentos e espaços internos, com remoção dos espaços nas extremidades. A interface exibe os dados gerais e a contagem de equipes. Conferi os sete critérios e marquei o ticket como concluído após 95 testes passarem.
+
+## 005 — Implementação da issue 04
+
+**Data:** 2026-11-23
+**Ferramenta:** Codex
+**Branch:** `issue-04-inscricao-de-equipes`
+
+**Prompt:**
+
+> Só inicie a implementação da issue 04 depois de concluir e validar a 03. Se houver um bloqueio ou uma regra importante em aberto, pare e me avise.
+
+**O que foi feito:** Depois de validar e registrar a issue 03 no commit `e1f7cd1`, criei a branch da issue 04 a partir desse commit. Implementei a aba Equipes com listas de inscritos e disponíveis, inscrição de equipes existentes, criação com inscrição na mesma gravação JSON e remoção antes do início. Conectei a consulta real de participação ao bloqueio de exclusão da equipe global e removi as inscrições quando uma equipe de rascunho é excluída. Os oito critérios foram conferidos e o ticket foi marcado como concluído após a suíte passar com 102 testes.
