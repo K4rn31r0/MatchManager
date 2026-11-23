@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Novo torneio · MatchManager{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1>Novo torneio</h1>
+
+  {% if error %}
+  <p class="alert" role="alert">{{ error }}</p>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('tournaments.create') }}" class="form">
+    {% include 'tournaments/_fields.html' %}
+    <button type="submit">Criar torneio</button>
+    <a class="button button-secondary" href="{{ url_for('tournaments.index') }}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

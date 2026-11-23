@@ -1,0 +1,31 @@
+    <label>
+      Nome
+      <input type="text" name="name" value="{{ form.get('name', '') }}" required>
+    </label>
+
+    <label>
+      Formato
+      <select name="format" required>
+        <option value="">Selecione…</option>
+        {% for option, label in format_options.items() %}
+        <option value="{{ option.value }}" {% if form.get('format') == option.value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Modalidade <span class="hint">(opcional)</span>
+      <input type="text" name="modality" value="{{ form.get('modality', '') }}" placeholder="Ex.: Futsal">
+    </label>
+
+    <div class="form-row">
+      <label>
+        Início <span class="hint">(opcional)</span>
+        <input type="date" name="start_date" value="{{ form.get('start_date', '') }}">
+      </label>
+      <label>
+        Término <span class="hint">(opcional)</span>
+        <input type="date" name="end_date" value="{{ form.get('end_date', '') }}">
+      </label>
+    </div>
+

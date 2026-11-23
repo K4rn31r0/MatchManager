@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ tournament.name }} · MatchManager{% endblock %}
+{% block content %}
+<section class="card">
+  <h1 style="white-space: pre-wrap">{{ tournament.name }}</h1>
+  <p>{{ tournament.format_label }} · {{ tournament.status_label }}</p>
+  <p>{{ tournament.modality }} · {{ tournament.period }}</p>
+  <div class="actions">
+    {% if tournament.status == 'draft' %}
+    <a class="button button-secondary" href="{{ url_for('tournaments.edit', tournament_id=tournament.id) }}">Editar torneio</a>
+    {% endif %}
+    <a class="button button-danger" href="{{ url_for('tournaments.delete', tournament_id=tournament.id) }}">Excluir torneio</a>
+  </div>
+</section>
+<section class="card">
+  <h2>Equipes inscritas: {{ tournament.participant_count }}</h2>
+  {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+  {% with can_remove=tournament.status == 'draft' %}
+  {% include 'tournaments/_registered_teams.html' %}
+  {% endwith %}
+  {% if tournament.status == 'draft' %}
+  <div class="registration-actions">
+    <a class="button" href="{{ url_for('registrations.index', tournament_id=tournament.id) }}">Inscrever novas equipes</a>
+  </div>
+  {% endif %}
+</section>
+<p><a class="button button-secondary" href="{{ url_for('tournaments.index') }}">Voltar aos torneios</a></p>
+{% endblock %}

@@ -20,6 +20,26 @@ class InMemoryTournamentRepository(TournamentRepository):
     def add(self, tournament: Tournament) -> None:
         self._tournaments.append(tournament)
 
+    def get(self, tournament_id: str) -> Tournament | None:
+        return next(
+            (item for item in self._tournaments if item.id == tournament_id),
+            None,
+        )
+
+    def update(self, tournament: Tournament) -> None:
+        self._tournaments = [
+            tournament if item.id == tournament.id else item
+            for item in self._tournaments
+        ]
+
+    def delete(self, tournament_id: str) -> None:
+        self._tournaments = [
+            item for item in self._tournaments if item.id != tournament_id
+        ]
+
+    def participant_counts(self) -> dict[str, int]:
+        return {}
+
     def list_all(self) -> list[Tournament]:
         return list(self._tournaments)
 

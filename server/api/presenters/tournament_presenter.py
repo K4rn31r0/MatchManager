@@ -32,11 +32,15 @@ class TournamentViewModel:
     status_label: str
     modality: str
     period: str
+    participant_count: int
 
 
-def present_tournament(tournament: Tournament) -> TournamentViewModel:
+def present_tournament(
+    tournament: Tournament, participant_count: int = 0,
+) -> TournamentViewModel:
     return TournamentViewModel(
         id=tournament.id,
+        participant_count=participant_count,
         name=tournament.name,
         format_label=FORMAT_LABELS[tournament.tournament_format],
         status=tournament.status.value,
@@ -47,9 +51,12 @@ def present_tournament(tournament: Tournament) -> TournamentViewModel:
 
 
 def present_tournaments(
-    tournaments: list[Tournament],
+    tournaments: list[Tournament], counts: dict[str, int],
 ) -> list[TournamentViewModel]:
-    return [present_tournament(tournament) for tournament in tournaments]
+    return [
+        present_tournament(tournament, counts.get(tournament.id, 0))
+        for tournament in tournaments
+    ]
 
 
 def _format_period(start: date | None, end: date | None) -> str:

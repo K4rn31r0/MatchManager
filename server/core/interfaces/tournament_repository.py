@@ -15,3 +15,19 @@ class TournamentRepository(ABC):
     @abstractmethod
     def list_all(self) -> list[Tournament]:
         """Return every persisted tournament."""
+
+    @abstractmethod
+    def get(self, tournament_id: str) -> Tournament | None:
+        """Return a tournament by id, if present."""
+
+    @abstractmethod
+    def update(self, tournament: Tournament) -> None:
+        """Replace an existing tournament."""
+
+    @abstractmethod
+    def delete(self, tournament_id: str) -> None:
+        """Remove a tournament and its registrations and matches."""
+
+    @abstractmethod
+    def participant_counts(self) -> dict[str, int]:
+        """Return registration counts keyed by tournament ID."""

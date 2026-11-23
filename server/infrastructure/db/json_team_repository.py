@@ -17,7 +17,7 @@ class JsonTeamRepository(TeamRepository):
 
     def add(self, team: Team) -> None:
         document = self._storage.read()
-        document.setdefault(_COLLECTION, []).append(_to_record(team))
+        document.setdefault(_COLLECTION, []).append(team_to_record(team))
         self._storage.write(document)
 
     def get(self, team_id: str) -> Team | None:
@@ -29,7 +29,7 @@ class JsonTeamRepository(TeamRepository):
     def update(self, team: Team) -> None:
         document = self._storage.read()
         document[_COLLECTION] = [
-            _to_record(team) if record["id"] == team.id else record
+            team_to_record(team) if record["id"] == team.id else record
             for record in self._records(document)
         ]
         self._storage.write(document)
@@ -41,6 +41,11 @@ class JsonTeamRepository(TeamRepository):
             for record in self._records(document)
             if record["id"] != team_id
         ]
+        if "registrations" in document:
+            document["registrations"] = [
+                record for record in document["registrations"]
+                if record["team_id"] != team_id
+            ]
         self._storage.write(document)
 
     def list_all(self) -> list[Team]:
@@ -54,7 +59,7 @@ class JsonTeamRepository(TeamRepository):
         return document.get(_COLLECTION, [])
 
 
-def _to_record(team: Team) -> dict[str, Any]:
+def team_to_record(team: Team) -> dict[str, Any]:
     return {
         "id": team.id,
         "name": team.name,

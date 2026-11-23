@@ -4,6 +4,7 @@ from collections.abc import Mapping
 
 from flask import Blueprint, redirect, render_template, request, url_for
 
+from server.api.controllers.team_form import parse_team_form
 from server.api.presenters.team_presenter import (
     present_team,
     present_teams,
@@ -14,7 +15,6 @@ from server.core.use_cases.create_team import CreateTeam
 from server.core.use_cases.delete_team import DeleteTeam
 from server.core.use_cases.get_team import GetTeam
 from server.core.use_cases.list_teams import ListTeams
-from server.core.use_cases.team_data import TeamData
 from server.core.use_cases.update_team import UpdateTeam
 
 _NEW_TEAM_FORM = {"color": "#1f6feb"}
@@ -53,7 +53,7 @@ def create_team_blueprint(
     @blueprint.post("/")
     def create():
         try:
-            create_team.execute(_parse_team_form(request.form))
+            create_team.execute(parse_team_form(request.form))
         except DomainError as error:
             return render_index(form=request.form, error=error.message), 400
         return redirect(url_for("teams.index"))
@@ -77,7 +77,7 @@ def create_team_blueprint(
     @blueprint.post("/<team_id>/edit")
     def update(team_id: str):
         try:
-            update_team.execute(team_id, _parse_team_form(request.form))
+            update_team.execute(team_id, parse_team_form(request.form))
         except TeamNotFoundError:
             raise
         except DomainError as error:
@@ -118,12 +118,3 @@ def create_team_blueprint(
         return redirect(url_for("teams.index"))
 
     return blueprint
-
-
-def _parse_team_form(form: Mapping[str, str]) -> TeamData:
-    return TeamData(
-        name=form.get("name", ""),
-        abbreviation=form.get("abbreviation"),
-        color=form.get("color") if form.get("has_color") else None,
-        notes=form.get("notes"),
-    )

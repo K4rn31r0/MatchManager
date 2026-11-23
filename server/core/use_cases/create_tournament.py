@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from server.core.entities.tournament import Tournament, TournamentFormat
-from server.core.errors import DuplicateTournamentNameError
+from server.core.use_cases.tournament_name_availability import ensure_name_available
 from server.core.interfaces.tournament_repository import TournamentRepository
 
 
@@ -40,7 +40,7 @@ class CreateTournament:
             InvalidTournamentError: the data breaks a tournament invariant.
             DuplicateTournamentNameError: the name is already in use.
         """
-        self._ensure_name_is_available(data.name)
+        ensure_name_available(self._repository, data.name)
         tournament = Tournament.create_draft(
             id=self._id_generator(),
             name=data.name,
@@ -52,10 +52,3 @@ class CreateTournament:
         )
         self._repository.add(tournament)
         return tournament
-
-    def _ensure_name_is_available(self, name: str) -> None:
-        tournaments = self._repository.list_all()
-        if any(other.has_equivalent_name(name) for other in tournaments):
-            raise DuplicateTournamentNameError(
-                f"Já existe um torneio chamado “{name.strip()}”."
-            )
