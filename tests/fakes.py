@@ -2,7 +2,12 @@
 
 from datetime import datetime, timedelta
 
+from server.core.entities.team import Team
 from server.core.entities.tournament import Tournament
+from server.core.interfaces.team_participation_query import (
+    TeamParticipationQuery,
+)
+from server.core.interfaces.team_repository import TeamRepository
 from server.core.interfaces.tournament_repository import TournamentRepository
 
 
@@ -41,3 +46,35 @@ class FakeClock:
         moment = self._next
         self._next += timedelta(minutes=1)
         return moment
+
+
+class InMemoryTeamRepository(TeamRepository):
+    """Fake repository that keeps teams in memory, keyed by id."""
+
+    def __init__(self) -> None:
+        self._teams: dict[str, Team] = {}
+
+    def add(self, team: Team) -> None:
+        self._teams[team.id] = team
+
+    def get(self, team_id: str) -> Team | None:
+        return self._teams.get(team_id)
+
+    def update(self, team: Team) -> None:
+        self._teams[team.id] = team
+
+    def delete(self, team_id: str) -> None:
+        del self._teams[team_id]
+
+    def list_all(self) -> list[Team]:
+        return list(self._teams.values())
+
+
+class FakeTeamParticipationQuery(TeamParticipationQuery):
+    """Answers from a fixed set of teams that play started tournaments."""
+
+    def __init__(self, teams_in_started_tournaments: set[str] = frozenset()):
+        self._team_ids = set(teams_in_started_tournaments)
+
+    def is_in_started_tournament(self, team_id: str) -> bool:
+        return team_id in self._team_ids

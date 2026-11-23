@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
 
-from server.core.entities.names import normalize_name
+from server.core.entities.names import normalize_name, optional_text
 from server.core.errors import InvalidTournamentError
 
 
@@ -74,7 +74,7 @@ class Tournament:
             tournament_format=tournament_format,
             status=TournamentStatus.DRAFT,
             created_at=created_at,
-            modality=_optional_text(modality),
+            modality=optional_text(modality),
             start_date=start_date,
             end_date=end_date,
         )
@@ -85,10 +85,3 @@ class Tournament:
         Names are equivalent when they differ only in case or accents.
         """
         return normalize_name(self.name) == normalize_name(name)
-
-
-def _optional_text(value: str | None) -> str | None:
-    """Return the stripped text, or None when it is missing or blank."""
-    if value is None or not value.strip():
-        return None
-    return value.strip()

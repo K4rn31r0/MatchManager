@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.name }} · MatchManager{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('teams.index') }}">← Equipes</a></p>
+
+<section class="card">
+  <div class="team-heading">
+    <span class="swatch swatch-large" {% if team.color %}style="background: {{ team.color }}"{% endif %}></span>
+    <h1>{{ team.name }}</h1>
+  </div>
+
+  <dl class="details">
+    <dt>Sigla</dt>
+    <dd>{{ team.abbreviation }}</dd>
+    <dt>Cor</dt>
+    <dd>{{ team.color or "Não definida" }}</dd>
+    <dt>Observações</dt>
+    <dd>{{ team.notes or "Sem observações" }}</dd>
+  </dl>
+
+  <div class="actions">
+    <a class="button" href="{{ url_for('teams.edit', team_id=team.id) }}">Editar</a>
+    <a class="button button-danger" href="{{ url_for('teams.confirm_delete', team_id=team.id) }}">Excluir</a>
+  </div>
+</section>
+{% endblock %}

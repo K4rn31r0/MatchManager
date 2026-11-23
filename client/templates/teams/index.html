@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Equipes · MatchManager{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1>Nova equipe</h1>
+  {% with action=url_for('teams.create'), submit_label='Criar equipe' %}
+    {% include "teams/_form.html" %}
+  {% endwith %}
+</section>
+
+<section>
+  <h2>Equipes</h2>
+
+  <form method="get" action="{{ url_for('teams.index') }}" class="search" role="search">
+    <input type="search" name="q" value="{{ search }}" placeholder="Buscar pelo nome" aria-label="Buscar equipe pelo nome">
+    <button type="submit">Buscar</button>
+  </form>
+
+  {% if teams %}
+  <ul class="item-list">
+    {% for team in teams %}
+    <li>
+      <a class="card team-item" href="{{ url_for('teams.detail', team_id=team.id) }}">
+        <span class="swatch" {% if team.color %}style="background: {{ team.color }}"{% endif %}></span>
+        <strong>{{ team.name }}</strong>
+        <span class="badge">{{ team.abbreviation }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif search %}
+  <p class="empty">Nenhuma equipe encontrada para “{{ search }}”. <a href="{{ url_for('teams.index') }}">Limpar busca</a></p>
+  {% else %}
+  <p class="empty">Nenhuma equipe cadastrada ainda. Crie a primeira acima.</p>
+  {% endif %}
+</section>
+{% endblock %}

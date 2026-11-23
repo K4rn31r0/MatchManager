@@ -1,0 +1,32 @@
+{# Team form shared by creation and edition. Expects: form, action, submit_label, error. #}
+{% if error %}
+<p class="alert" role="alert">{{ error }}</p>
+{% endif %}
+
+<form method="post" action="{{ action }}" class="form">
+  <label>
+    Nome
+    <input type="text" name="name" value="{{ form.get('name', '') }}" required>
+  </label>
+
+  <label>
+    Sigla <span class="hint">(opcional — gerada a partir do nome se ficar vazia)</span>
+    <input type="text" name="abbreviation" value="{{ form.get('abbreviation', '') }}" placeholder="Ex.: FLA">
+  </label>
+
+  <fieldset class="color-field">
+    <legend>Cor <span class="hint">(opcional)</span></legend>
+    <label class="inline">
+      <input type="checkbox" name="has_color" {% if form.get('has_color') %}checked{% endif %}>
+      Definir cor
+    </label>
+    <input type="color" name="color" value="{{ form.get('color') or '#1f6feb' }}" aria-label="Cor da equipe">
+  </fieldset>
+
+  <label>
+    Observações <span class="hint">(opcional)</span>
+    <textarea name="notes" rows="3">{{ form.get('notes', '') }}</textarea>
+  </label>
+
+  <button type="submit">{{ submit_label }}</button>
+</form>

@@ -18,3 +18,19 @@ class InvalidTournamentError(DomainError):
 
 class DuplicateTournamentNameError(DomainError):
     """Another tournament already uses an equivalent name."""
+
+
+class InvalidTeamError(DomainError):
+    """Team data does not satisfy the team invariants."""
+
+
+class DuplicateTeamNameError(DomainError):
+    """Another team already uses an equivalent name."""
+
+
+class TeamNotFoundError(DomainError):
+    """No team exists with the requested id."""
+
+
+class TeamInStartedTournamentError(DomainError):
+    """The team cannot be removed while it plays a started tournament."""

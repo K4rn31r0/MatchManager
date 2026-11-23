@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir {{ team.name }} · MatchManager{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('teams.detail', team_id=team.id) }}">← {{ team.name }}</a></p>
+
+<section class="card">
+  <h1>Excluir equipe</h1>
+
+  {% if error %}
+  <p class="alert" role="alert">{{ error }}</p>
+  {% else %}
+  <p>Tem certeza de que deseja excluir a equipe <strong>{{ team.name }}</strong>? Esta ação não pode ser desfeita.</p>
+  {% endif %}
+
+  <div class="actions">
+    <a class="button button-secondary" href="{{ url_for('teams.detail', team_id=team.id) }}">Cancelar</a>
+    {% if not error %}
+    <form method="post" action="{{ url_for('teams.delete', team_id=team.id) }}">
+      <button type="submit" class="button-danger">Excluir</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
