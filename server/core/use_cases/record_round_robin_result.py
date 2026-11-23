@@ -53,10 +53,6 @@ class RecordRoundRobinResult:
             raise InvalidTournamentError(
                 "Informe vitória, empate ou derrota."
             )
-        if (data.first_score is None) != (data.second_score is None):
-            raise InvalidTournamentError(
-                "Informe o placar completo ou não informe placar."
-            )
         try:
             recorded = match.record_result(
                 result=data.result,

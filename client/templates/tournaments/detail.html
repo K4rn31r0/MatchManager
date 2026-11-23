@@ -134,6 +134,7 @@
   </form>
   {% endif %}
   {% if champion_team_id %}<p><strong>Campeão: {{ standings.rows[0].team.name }}</strong></p>{% endif %}
+  {% if standings.alphabetical_fallback_applied %}<p>A ordem alfabética foi usada como desempate final.</p>{% endif %}
 </section>
 {% endif %}
 <section class="card">

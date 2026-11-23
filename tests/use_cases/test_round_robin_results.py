@@ -308,3 +308,39 @@ def test_finish_round_robin_sets_finished_and_exposes_leader():
     ).execute("t1")
 
     assert finished.status is TournamentStatus.FINISHED
+
+
+def test_finish_round_robin_rejects_completed_match_without_result():
+    tournament_repository = InMemoryTournamentRepository()
+    tournament_repository.add(make_tournament())
+    matches = InMemoryMatches([
+        Match(
+            id="m1",
+            tournament_id="t1",
+            round_number=1,
+            first_team_id="a",
+            second_team_id="b",
+            status=MatchStatus.COMPLETED,
+            result=None,
+        ),
+    ])
+
+    with pytest.raises(InvalidTournamentError, match="resultado válido"):
+        FinishRoundRobinTournament(
+            tournament_repository,
+            matches,
+        ).execute("t1")
+
+
+def test_standings_reports_when_alphabetical_fallback_is_used():
+    tournament_repository = InMemoryTournamentRepository()
+    tournament_repository.add(make_tournament())
+    teams = make_teams()
+    standings = CalculateRoundRobinStandings(
+        tournament_repository,
+        teams,
+        InMemoryRegistrations({"a", "b", "c"}),
+        InMemoryMatches([]),
+    ).execute("t1")
+
+    assert standings.alphabetical_fallback_applied is True

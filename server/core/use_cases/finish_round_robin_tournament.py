@@ -28,11 +28,14 @@ class FinishRoundRobinTournament:
         pending = [
             match
             for match in self._matches.list_for_tournament(tournament_id)
-            if match.status is not MatchStatus.COMPLETED
+            if (
+                match.status is not MatchStatus.COMPLETED
+                or match.result is None
+            )
         ]
         if pending:
             raise InvalidTournamentError(
-                "Não é possível encerrar: existem partidas pendentes."
+                "Não é possível encerrar: existem partidas pendentes ou sem resultado válido."
             )
         finished = tournament.finish_round_robin(self._clock())
         self._repository.update(finished)

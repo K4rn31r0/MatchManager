@@ -34,6 +34,7 @@ class StandingRow:
 class RoundRobinStandings:
     rows: tuple[StandingRow, ...]
     champion_team_id: str | None = None
+    alphabetical_fallback_applied: bool = False
 
 
 class CalculateRoundRobinStandings:
@@ -157,8 +158,21 @@ class CalculateRoundRobinStandings:
             )
             for index, row in enumerate(ordered, start=1)
         )
+        alphabetical_fallback_applied = any(
+            left.points == right.points
+            and all(
+                left.statistics.get(tie_breaker.name)
+                == right.statistics.get(tie_breaker.name)
+                for tie_breaker in config.tie_breakers
+            )
+            for left, right in zip(positioned, positioned[1:])
+        )
         champion = positioned[0].team.id if tournament.status.value == "finished" else None
-        return RoundRobinStandings(rows=positioned, champion_team_id=champion)
+        return RoundRobinStandings(
+            rows=positioned,
+            champion_team_id=champion,
+            alphabetical_fallback_applied=alphabetical_fallback_applied,
+        )
 
 
 def _empty_row(team: Team) -> StandingRow:
