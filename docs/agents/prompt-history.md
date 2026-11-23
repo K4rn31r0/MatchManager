@@ -76,7 +76,7 @@ Registro sequencial das ações significativas realizadas com apoio de IA, com o
 
 **Data:** 2026-11-23
 **Ferramenta:** Copilot SDK no VS Code
-**Branch:** atual
+**Branch:** issues-05-e-06-pontos-corridos
 
 **Prompt:**
 
@@ -92,7 +92,7 @@ Após a revisão obrigatória do commit inicial, completei os casos de borda de 
 
 **Data:** 2026-11-23
 **Ferramenta:** Copilot SDK no VS Code
-**Branch:** atual
+**Branch:** issues-05-e-06-pontos-corridos
 
 **Prompt:**
 
