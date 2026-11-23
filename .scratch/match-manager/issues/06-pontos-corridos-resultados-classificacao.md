@@ -4,17 +4,17 @@
 
 **Blocked by:** 05 Pontos corridos: configuração e calendário
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Uma partida aceita resultado direto ou placar completo.
-- [ ] Placares parcialmente preenchidos são recusados.
-- [ ] Empates são permitidos e alimentam a pontuação configurada.
-- [ ] Estatísticas ausentes não são convertidas automaticamente em zero.
-- [ ] Cada resultado recalcula jogos, vitórias, empates, derrotas, pontos e estatísticas agregadas.
-- [ ] A classificação aplica os critérios configurados na ordem definida.
-- [ ] Critérios positivos favorecem valores maiores e negativos favorecem valores menores.
-- [ ] Empates totais são resolvidos pela ordem alfabética do nome da equipe.
-- [ ] A tabela mostra posição, equipe, jogos, vitórias, empates, derrotas e pontos em destaque.
-- [ ] O líder é destacado como campeão somente após o torneio ser encerrado.
-- [ ] Os cálculos são testados independentemente de Flask e HTTP.
+- [x] Uma partida aceita resultado direto ou placar completo.
+- [x] Placares parcialmente preenchidos são recusados.
+- [x] Empates são permitidos e alimentam a pontuação configurada.
+- [x] Estatísticas ausentes não são convertidas automaticamente em zero.
+- [x] Cada resultado recalcula jogos, vitórias, empates, derrotas, pontos e estatísticas agregadas.
+- [x] A classificação aplica os critérios configurados na ordem definida.
+- [x] Critérios positivos favorecem valores maiores e negativos favorecem valores menores.
+- [x] Empates totais são resolvidos pela ordem alfabética do nome da equipe.
+- [x] A tabela mostra posição, equipe, jogos, vitórias, empates, derrotas e pontos em destaque.
+- [x] O líder é destacado como campeão somente após o torneio ser encerrado.
+- [x] Os cálculos são testados independentemente de Flask e HTTP.
 

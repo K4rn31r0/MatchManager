@@ -4,6 +4,11 @@ from datetime import date, datetime
 from typing import Any
 
 from server.core.entities.tournament import (
+    RoundRobinConfig,
+    RoundRobinMode,
+    StatisticField,
+    TieBreaker,
+    TieBreakerDirection,
     Tournament,
     TournamentFormat,
     TournamentStatus,
@@ -79,10 +84,45 @@ def _to_record(tournament: Tournament) -> dict[str, Any]:
     }
     if tournament.updated_at is not None:
         record["updated_at"] = tournament.updated_at.isoformat()
+    if tournament.round_robin is not None:
+        record["round_robin"] = {
+            "mode": tournament.round_robin.mode.value,
+            "win_points": tournament.round_robin.win_points,
+            "draw_points": tournament.round_robin.draw_points,
+            "loss_points": tournament.round_robin.loss_points,
+            "tie_breakers": [
+                {"name": item.name, "direction": item.direction.value}
+                for item in tournament.round_robin.tie_breakers
+            ],
+            "statistic_fields": [
+                item.name for item in tournament.round_robin.statistic_fields
+            ],
+        }
     return record
 
 
 def _from_record(record: dict[str, Any]) -> Tournament:
+    round_robin_record = record.get("round_robin")
+    round_robin = (
+        RoundRobinConfig(
+            mode=RoundRobinMode(round_robin_record["mode"]),
+            win_points=round_robin_record["win_points"],
+            draw_points=round_robin_record["draw_points"],
+            loss_points=round_robin_record["loss_points"],
+            tie_breakers=tuple(
+                TieBreaker(
+                    name=item["name"],
+                    direction=TieBreakerDirection(item["direction"]),
+                )
+                for item in round_robin_record["tie_breakers"]
+            ),
+            statistic_fields=tuple(
+                StatisticField(name=name)
+                for name in round_robin_record.get("statistic_fields", [])
+            ),
+        )
+        if round_robin_record is not None else None
+    )
     return Tournament(
         id=record["id"],
         name=record["name"],
@@ -96,6 +136,7 @@ def _from_record(record: dict[str, Any]) -> Tournament:
         modality=record.get("modality"),
         start_date=_text_to_date(record.get("start_date")),
         end_date=_text_to_date(record.get("end_date")),
+        round_robin=round_robin,
     )
 
 

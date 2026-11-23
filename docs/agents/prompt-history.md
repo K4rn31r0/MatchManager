@@ -71,3 +71,35 @@ Registro sequencial das ações significativas realizadas com apoio de IA, com o
 > Só inicie a implementação da issue 04 depois de concluir e validar a 03. Se houver um bloqueio ou uma regra importante em aberto, pare e me avise.
 
 **O que foi feito:** Depois de validar e registrar a issue 03 no commit `e1f7cd1`, criei a branch da issue 04 a partir desse commit. Implementei a aba Equipes com listas de inscritos e disponíveis, inscrição de equipes existentes, criação com inscrição na mesma gravação JSON e remoção antes do início. Conectei a consulta real de participação ao bloqueio de exclusão da equipe global e removi as inscrições quando uma equipe de rascunho é excluída. Os oito critérios foram conferidos e o ticket foi marcado como concluído após a suíte passar com 102 testes.
+
+## 006 — Implementação da issue 05: Pontos corridos, configuração e calendário
+
+**Data:** 2026-11-23
+**Ferramenta:** Copilot SDK no VS Code
+**Branch:** issues-05-e-06-pontos-corridos
+
+**Prompt:**
+
+> a issue 05 (.scratch\match-manager\issues\05-pontos-corridos-configuracao-calendario.md). Antes de começar, leia a issue e os arquivos que ela referencia.
+
+**Decisões confirmadas com o usuário antes da implementação:** os seams principais são o caso de uso de configurar pontos corridos e o gerador de calendário, testados com repositórios em memória, independentemente de Flask e HTTP.
+
+**O que foi feito:** Implementei no core os modos turno único e ida e volta, pontuação padrão de vitória 3, empate 1 e derrota 0, critérios de desempate positivos ou negativos e campos estatísticos. A configuração valida a relação entre os pontos, exige pelo menos um critério e bloqueia alterações fora do rascunho. O gerador circular cria um confronto por par, repete os confrontos nos dois sentidos na ida e volta e representa descansos válidos para número ímpar de equipes. A configuração e os confrontos são persistidos no JSON local e estão conectados à interface do torneio. Foram adicionados testes unitários, teste de serialização da configuração e compatibilidade ASCII no armazenamento JSON. Resultado: 114 testes passando na suíte completa. A issue 05 foi marcada como concluída.
+
+Após a revisão obrigatória do commit inicial, completei os casos de borda de critérios inválidos, equipes insuficientes e descanso em ida e volta com número ímpar. O modelo passou a representar os campos estatísticos por tipo próprio, a interface permite configurar até três critérios na ordem e o conteúdo foi validado novamente com 118 testes passando.
+
+## 007 — Implementação da issue 06: Pontos corridos, resultados e classificação
+
+**Data:** 2026-11-23
+**Ferramenta:** Copilot SDK no VS Code
+**Branch:** issues-05-e-06-pontos-corridos
+
+**Prompt:**
+
+> a issue 06 (.scratch\match-manager\issues\06-pontos-corridos-resultados-classificacao.md). Antes de começar, leia a issue e os arquivos que ela referencia, e tenha certeza de que a issue 05 esteja devidamente validada. Se houver alguma regra de negócio importante em aberto, pare e me avise.
+
+**Decisões confirmadas com o usuário antes da implementação:** o placar só é aceito quando ambos os valores estiverem preenchidos; placar parcial é recusado. As interfaces principais cobrem registro de resultado, cálculo da classificação e encerramento.
+
+**O que foi feito:** A issue 05 foi confirmada como concluída e validada pela suíte atual com 118 testes antes desta implementação. Adicionei ao domínio de partida resultado direto, placar opcional, estatísticas por equipe e estado concluído. Implementei casos de uso independentes de Flask para registrar ou corrigir resultados, calcular jogos, vitórias, empates, derrotas, pontos e estatísticas agregadas, ordenar por critérios positivos ou negativos e usar o nome normalizado como desempate final. Adicionei o encerramento que rejeita partidas pendentes e expõe o líder apenas como campeão após o status encerrado. A persistência JSON passou a ler, atualizar e listar partidas completas ou legadas. A interface passou a listar partidas, registrar placares e estatísticas, mostrar a tabela em destaque e encerrar o torneio. Resultado: 128 testes passando. A issue 06 foi marcada como concluída.
+
+Após a revisão obrigatória, corrigi o encerramento para rejeitar também partidas marcadas como concluídas sem resultado válido, centralizei a validação de placar parcial na entidade da partida e passei a informar na interface quando o desempate alfabético foi aplicado.
