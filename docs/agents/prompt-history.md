@@ -71,3 +71,17 @@ Registro sequencial das ações significativas realizadas com apoio de IA, com o
 > Só inicie a implementação da issue 04 depois de concluir e validar a 03. Se houver um bloqueio ou uma regra importante em aberto, pare e me avise.
 
 **O que foi feito:** Depois de validar e registrar a issue 03 no commit `e1f7cd1`, criei a branch da issue 04 a partir desse commit. Implementei a aba Equipes com listas de inscritos e disponíveis, inscrição de equipes existentes, criação com inscrição na mesma gravação JSON e remoção antes do início. Conectei a consulta real de participação ao bloqueio de exclusão da equipe global e removi as inscrições quando uma equipe de rascunho é excluída. Os oito critérios foram conferidos e o ticket foi marcado como concluído após a suíte passar com 102 testes.
+
+## 006 — Implementação da issue 05: Pontos corridos, configuração e calendário
+
+**Data:** 2026-11-23
+**Ferramenta:** Copilot SDK no VS Code
+**Branch:** atual
+
+**Prompt:**
+
+> a issue 05 (.scratch\match-manager\issues\05-pontos-corridos-configuracao-calendario.md). Antes de começar, leia a issue e os arquivos que ela referencia.
+
+**Decisões confirmadas com o usuário antes da implementação:** os seams principais são o caso de uso de configurar pontos corridos e o gerador de calendário, testados com repositórios em memória, independentemente de Flask e HTTP.
+
+**O que foi feito:** Implementei no core os modos turno único e ida e volta, pontuação padrão de vitória 3, empate 1 e derrota 0, critérios de desempate positivos ou negativos e campos estatísticos. A configuração valida a relação entre os pontos, exige pelo menos um critério e bloqueia alterações fora do rascunho. O gerador circular cria um confronto por par, repete os confrontos nos dois sentidos na ida e volta e representa descansos válidos para número ímpar de equipes. A configuração e os confrontos são persistidos no JSON local e estão conectados à interface do torneio. Foram adicionados testes unitários, teste de serialização da configuração e compatibilidade ASCII no armazenamento JSON. Resultado: 114 testes passando na suíte completa. A issue 05 foi marcada como concluída.

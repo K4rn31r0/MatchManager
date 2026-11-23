@@ -35,6 +35,9 @@ from server.infrastructure.db.json_tournament_repository import (
 from server.infrastructure.db.json_registration_repository import (
     JsonRegistrationRepository,
 )
+from server.infrastructure.db.json_match_repository import JsonMatchRepository
+from server.core.use_cases.configure_round_robin import ConfigureRoundRobin
+from server.core.use_cases.generate_round_robin_calendar import GenerateRoundRobinCalendar
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_FILE = PROJECT_ROOT / "instance" / "matchmanager.json"
@@ -57,6 +60,7 @@ def create_app(data_file: Path | None = None) -> Flask:
     team_repository = JsonTeamRepository(storage)
 
     registration_repository = JsonRegistrationRepository(storage)
+    match_repository = JsonMatchRepository(storage)
     create_team = CreateTeam(team_repository, _new_id)
     get_team = GetTeam(team_repository)
     list_teams = ListTeams(team_repository)
@@ -80,6 +84,12 @@ def create_app(data_file: Path | None = None) -> Flask:
             registrations=registrations,
             update_tournament=UpdateTournament(tournament_repository, datetime.now),
             delete_tournament=DeleteTournament(tournament_repository),
+            configure_round_robin=ConfigureRoundRobin(tournament_repository),
+            generate_round_robin_calendar=GenerateRoundRobinCalendar(
+                tournament_repository,
+                registration_repository,
+                match_repository,
+            ),
         )
     )
     app.register_blueprint(

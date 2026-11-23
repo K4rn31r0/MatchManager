@@ -23,6 +23,36 @@ class TournamentStatus(Enum):
     FINISHED = "finished"
 
 
+class RoundRobinMode(Enum):
+    """How often teams face each other in a round-robin tournament."""
+
+    SINGLE = "single"
+    DOUBLE = "double"
+
+
+class TieBreakerDirection(Enum):
+    """Whether a tie-breaker favors higher or lower aggregate values."""
+
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+
+
+@dataclass(frozen=True, kw_only=True)
+class TieBreaker:
+    name: str
+    direction: TieBreakerDirection
+
+
+@dataclass(frozen=True, kw_only=True)
+class RoundRobinConfig:
+    mode: RoundRobinMode
+    win_points: int
+    draw_points: int
+    loss_points: int
+    tie_breakers: tuple[TieBreaker, ...]
+    statistic_fields: tuple[str, ...] = ()
+
+
 @dataclass(frozen=True, kw_only=True)
 class Tournament:
     """A sports competition organized by the user.
@@ -39,6 +69,7 @@ class Tournament:
     start_date: date | None = None
     end_date: date | None = None
     updated_at: datetime | None = None
+    round_robin: RoundRobinConfig | None = None
 
     @property
     def last_activity(self) -> datetime:
@@ -102,6 +133,30 @@ class Tournament:
             raise InvalidTournamentError(
                 "Só é possível alterar inscrições em torneios em rascunho."
             )
+
+    def configure_round_robin(
+        self,
+        *,
+        config: RoundRobinConfig,
+        updated_at: datetime,
+    ) -> "Tournament":
+        if self.status is not TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível configurar torneios em rascunho."
+            )
+        if self.tournament_format is not TournamentFormat.ROUND_ROBIN:
+            raise InvalidTournamentError(
+                "Esta configuração só pode ser usada em pontos corridos."
+            )
+        if not config.win_points > config.draw_points > config.loss_points:
+            raise InvalidTournamentError(
+                "A pontuação deve respeitar vitória maior que empate maior que derrota."
+            )
+        if not config.tie_breakers:
+            raise InvalidTournamentError(
+                "É necessário cadastrar pelo menos um critério de desempate."
+            )
+        return replace(self, round_robin=config, updated_at=updated_at)
 
     def has_equivalent_name(self, name: str) -> bool:
         """Tell whether a name clashes with this tournament's name.

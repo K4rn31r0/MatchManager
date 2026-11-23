@@ -12,6 +12,38 @@
     <a class="button button-danger" href="{{ url_for('tournaments.delete', tournament_id=tournament.id) }}">Excluir torneio</a>
   </div>
 </section>
+{% if tournament.status == 'draft' and tournament.format_label == 'Pontos corridos' %}
+<section class="card">
+  <h2>Configuração de pontos corridos</h2>
+  <form method="post" action="{{ url_for('tournaments.configure_round_robin_route', tournament_id=tournament.id) }}">
+    <label>Turnos
+      <select name="mode">
+        <option value="single"{% if tournament.round_robin and tournament.round_robin.mode.value == 'single' %} selected{% endif %}>Turno único</option>
+        <option value="double"{% if tournament.round_robin and tournament.round_robin.mode.value == 'double' %} selected{% endif %}>Ida e volta</option>
+      </select>
+    </label>
+    <label>Vitória <input name="win_points" type="number" value="{{ tournament.round_robin.win_points if tournament.round_robin else 3 }}"></label>
+    <label>Empate <input name="draw_points" type="number" value="{{ tournament.round_robin.draw_points if tournament.round_robin else 1 }}"></label>
+    <label>Derrota <input name="loss_points" type="number" value="{{ tournament.round_robin.loss_points if tournament.round_robin else 0 }}"></label>
+    <label>Critério de desempate
+      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[0].name if tournament.round_robin and tournament.round_robin.tie_breakers else '' }}">
+    </label>
+    <label>Direção
+      <select name="tie_breaker_direction">
+        <option value="positive">Favor números maiores</option>
+        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers and tournament.round_robin.tie_breakers[0].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
+      </select>
+    </label>
+    <label>Campos estatísticos (separados por vírgula)
+      <input name="statistic_fields" value="{{ tournament.round_robin.statistic_fields | join(', ') if tournament.round_robin else '' }}">
+    </label>
+    <button class="button" type="submit">Salvar configuração</button>
+  </form>
+  <form method="post" action="{{ url_for('tournaments.generate_round_robin_calendar_route', tournament_id=tournament.id) }}">
+    <button class="button button-secondary" type="submit">Gerar calendário</button>
+  </form>
+</section>
+{% endif %}
 <section class="card">
   <h2>Equipes inscritas: {{ tournament.participant_count }}</h2>
   {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}

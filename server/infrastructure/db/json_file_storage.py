@@ -28,5 +28,5 @@ class JsonFileStorage:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         temporary_path = self._path.with_suffix(self._path.suffix + ".tmp")
         with temporary_path.open("w", encoding="utf-8") as file:
-            json.dump(document, file, ensure_ascii=False, indent=2)
+            json.dump(document, file, ensure_ascii=True, indent=2)
         os.replace(temporary_path, self._path)

@@ -12,7 +12,11 @@ from server.api.presenters.tournament_presenter import (
     present_tournament,
     present_tournaments,
 )
-from server.core.entities.tournament import TournamentFormat, TournamentStatus
+from server.core.entities.tournament import (
+    RoundRobinMode,
+    TournamentFormat,
+    TournamentStatus,
+)
 from server.core.errors import DomainError, TournamentNotFoundError
 from server.core.use_cases.create_tournament import (
     CreateTournament,
@@ -23,6 +27,13 @@ from server.core.use_cases.get_tournament import GetTournament
 from server.core.use_cases.update_tournament import UpdateTournament
 from server.core.use_cases.list_tournaments import ListTournaments
 from server.core.use_cases.tournament_registrations import TournamentRegistrations
+from server.core.use_cases.configure_round_robin import (
+    ConfigureRoundRobin,
+    RoundRobinConfigInput,
+)
+from server.core.use_cases.generate_round_robin_calendar import (
+    GenerateRoundRobinCalendar,
+)
 
 
 class InvalidFormError(Exception):
@@ -40,6 +51,8 @@ def create_tournament_blueprint(
     registrations: TournamentRegistrations,
     update_tournament: UpdateTournament,
     delete_tournament: DeleteTournament,
+    configure_round_robin: ConfigureRoundRobin,
+    generate_round_robin_calendar: GenerateRoundRobinCalendar,
 ) -> Blueprint:
     """Build the tournament routes around the injected use cases."""
     blueprint = Blueprint("tournaments", __name__)
@@ -157,6 +170,47 @@ def create_tournament_blueprint(
             error=error,
         ), 400 if error else 200
 
+    @blueprint.post("/tournaments/<tournament_id>/round-robin/configure")
+    def configure_round_robin_route(tournament_id: str):
+        try:
+            names = request.form.getlist("tie_breaker_name")
+            directions = request.form.getlist("tie_breaker_direction")
+            tie_breakers = tuple(
+                (name, direction)
+                for name, direction in zip(names, directions)
+                if name.strip()
+            )
+            configured = configure_round_robin.execute(
+                tournament_id,
+                RoundRobinConfigInput(
+                    mode=RoundRobinMode(request.form["mode"]),
+                    win_points=_parse_points(request.form, "win_points", 3),
+                    draw_points=_parse_points(request.form, "draw_points", 1),
+                    loss_points=_parse_points(request.form, "loss_points", 0),
+                    tie_breakers=tie_breakers,
+                    statistic_fields=tuple(
+                        item.strip()
+                        for item in request.form.get("statistic_fields", "").split(",")
+                        if item.strip()
+                    ),
+                ),
+            )
+        except (KeyError, ValueError, InvalidFormError, DomainError) as error:
+            message = (
+                error.message if isinstance(error, DomainError)
+                else "Informe uma configuração válida."
+            )
+            return render_detail(tournament_id, message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
+    @blueprint.post("/tournaments/<tournament_id>/round-robin/generate")
+    def generate_round_robin_calendar_route(tournament_id: str):
+        try:
+            generate_round_robin_calendar.execute(tournament_id)
+        except DomainError as error:
+            return render_detail(tournament_id, error.message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
     return blueprint
 
 
@@ -175,6 +229,20 @@ def _parse_format(value: str) -> TournamentFormat:
         return TournamentFormat(value)
     except ValueError:
         raise InvalidFormError("Escolha o formato do torneio.") from None
+
+
+def _parse_points(
+    form: MultiDict[str, str],
+    name: str,
+    default: int,
+) -> int:
+    value = form.get(name, "")
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        raise InvalidFormError("A pontuação deve ser numérica.") from None
 
 
 def _parse_date(value: str, label: str) -> date | None:
