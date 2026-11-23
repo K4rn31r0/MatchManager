@@ -30,12 +30,30 @@
     </label>
     <label>Direção
       <select name="tie_breaker_direction">
-        <option value="positive">Favor números maiores</option>
+        <option value="positive"{% if tournament.round_robin and tournament.round_robin.tie_breakers and tournament.round_robin.tie_breakers[0].direction.value == 'positive' %} selected{% endif %}>Favor números maiores</option>
         <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers and tournament.round_robin.tie_breakers[0].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
       </select>
     </label>
+    <label>Segundo critério de desempate
+      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[1].name if tournament.round_robin and tournament.round_robin.tie_breakers | length > 1 else '' }}">
+    </label>
+    <label>Direção do segundo critério
+      <select name="tie_breaker_direction">
+        <option value="positive">Favor números maiores</option>
+        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers | length > 1 and tournament.round_robin.tie_breakers[1].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
+      </select>
+    </label>
+    <label>Terceiro critério de desempate
+      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[2].name if tournament.round_robin and tournament.round_robin.tie_breakers | length > 2 else '' }}">
+    </label>
+    <label>Direção do terceiro critério
+      <select name="tie_breaker_direction">
+        <option value="positive">Favor números maiores</option>
+        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers | length > 2 and tournament.round_robin.tie_breakers[2].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
+      </select>
+    </label>
     <label>Campos estatísticos (separados por vírgula)
-      <input name="statistic_fields" value="{{ tournament.round_robin.statistic_fields | join(', ') if tournament.round_robin else '' }}">
+      <input name="statistic_fields" value="{% if tournament.round_robin %}{% for field in tournament.round_robin.statistic_fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}">
     </label>
     <button class="button" type="submit">Salvar configuração</button>
   </form>

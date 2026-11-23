@@ -60,7 +60,9 @@ def test_configure_round_robin_uses_defaults_and_positive_negative_criteria(
     assert configured.round_robin.loss_points == 0
     assert configured.round_robin.tie_breakers[0].direction is TieBreakerDirection.POSITIVE
     assert configured.round_robin.tie_breakers[1].direction is TieBreakerDirection.NEGATIVE
-    assert configured.round_robin.statistic_fields == ("Gols", "Cartões")
+    assert tuple(
+        field.name for field in configured.round_robin.statistic_fields
+    ) == ("Gols", "Cartões")
 
 
 @pytest.mark.parametrize(
@@ -110,6 +112,26 @@ def test_configure_round_robin_is_blocked_after_start(
             RoundRobinConfigInput(
                 mode=RoundRobinMode.SINGLE,
                 tie_breakers=[("Saldo", "positive")],
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    ("tie_breakers", "message"),
+    [
+        ([("", "positive")], "nome"),
+        ([("Saldo", "unknown")], "positivo ou negativo"),
+    ],
+)
+def test_configure_round_robin_rejects_invalid_tie_breaker(
+    tournament_repository, tournament, tie_breakers, message,
+):
+    with pytest.raises(InvalidTournamentError, match=message):
+        ConfigureRoundRobin(tournament_repository).execute(
+            tournament.id,
+            RoundRobinConfigInput(
+                mode=RoundRobinMode.SINGLE,
+                tie_breakers=tie_breakers,
             ),
         )
 
@@ -195,3 +217,31 @@ def test_generate_calendar_for_odd_teams_has_valid_rest_rounds(
     assert len(calendar.rounds) == 5
     assert all(len(round_data.resting_team_ids) == 1 for round_data in calendar.rounds)
     assert sum(len(round_data.matches) for round_data in calendar.rounds) == 10
+
+
+def test_generate_double_calendar_repeats_valid_rest_rounds(
+    tournament_repository, tournament,
+):
+    configure_tournament(tournament_repository, tournament, RoundRobinMode.DOUBLE)
+    calendar = GenerateRoundRobinCalendar(
+        tournament_repository,
+        InMemoryRegistrations({"a", "b", "c", "d", "e"}),
+        InMemoryMatches(),
+    ).execute(tournament.id)
+
+    assert len(calendar.rounds) == 10
+    assert all(len(round_data.resting_team_ids) == 1 for round_data in calendar.rounds)
+    assert sum(len(round_data.matches) for round_data in calendar.rounds) == 20
+
+
+def test_generate_calendar_requires_two_registered_teams(
+    tournament_repository, tournament,
+):
+    configure_tournament(tournament_repository, tournament, RoundRobinMode.SINGLE)
+
+    with pytest.raises(InvalidTournamentError, match="duas equipes"):
+        GenerateRoundRobinCalendar(
+            tournament_repository,
+            InMemoryRegistrations({"a"}),
+            InMemoryMatches(),
+        ).execute(tournament.id)

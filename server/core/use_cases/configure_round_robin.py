@@ -7,6 +7,7 @@ from datetime import datetime
 from server.core.entities.tournament import (
     RoundRobinConfig,
     RoundRobinMode,
+    StatisticField,
     TieBreaker,
     TieBreakerDirection,
     Tournament,
@@ -52,7 +53,9 @@ class ConfigureRoundRobin:
                 "Cada critério de desempate precisa de um nome."
             )
         statistics = tuple(
-            name.strip() for name in data.statistic_fields if name.strip()
+            StatisticField(name=name.strip())
+            for name in data.statistic_fields
+            if name.strip()
         )
         config = RoundRobinConfig(
             mode=data.mode,

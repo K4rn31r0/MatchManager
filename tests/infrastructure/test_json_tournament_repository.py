@@ -3,6 +3,7 @@ from datetime import date, datetime
 from server.core.entities.tournament import (
     RoundRobinConfig,
     RoundRobinMode,
+    StatisticField,
     TieBreaker,
     TieBreakerDirection,
     Tournament,
@@ -78,7 +79,7 @@ def test_round_robin_configuration_round_trips(tmp_path):
                     direction=TieBreakerDirection.NEGATIVE,
                 ),
             ),
-            statistic_fields=("Gols", "Cartões"),
+            statistic_fields=(StatisticField(name="Gols"), StatisticField(name="Cartões")),
         ),
         updated_at=datetime(2026, 1, 1, 12, 31),
     )

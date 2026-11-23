@@ -44,13 +44,18 @@ class TieBreaker:
 
 
 @dataclass(frozen=True, kw_only=True)
+class StatisticField:
+    name: str
+
+
+@dataclass(frozen=True, kw_only=True)
 class RoundRobinConfig:
     mode: RoundRobinMode
     win_points: int
     draw_points: int
     loss_points: int
     tie_breakers: tuple[TieBreaker, ...]
-    statistic_fields: tuple[str, ...] = ()
+    statistic_fields: tuple[StatisticField, ...] = ()
 
 
 @dataclass(frozen=True, kw_only=True)
