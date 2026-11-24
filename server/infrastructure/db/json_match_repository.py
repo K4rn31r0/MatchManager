@@ -70,6 +70,8 @@ def _to_record(match: Match) -> dict[str, Any]:
         record["first_team_stats"] = match.first_team_stats
     if match.second_team_stats is not None:
         record["second_team_stats"] = match.second_team_stats
+    if match.bracket_position is not None:
+        record["bracket_position"] = match.bracket_position
     return record
 
 
@@ -90,6 +92,7 @@ def _from_record(record: dict[str, Any]) -> Match | None:
         round_number=record["round"],
         first_team_id=record["first_team_id"],
         second_team_id=record["second_team_id"],
+        bracket_position=record.get("bracket_position"),
         status=MatchStatus(record["status"]),
         result=(
             MatchResult(record["result"])

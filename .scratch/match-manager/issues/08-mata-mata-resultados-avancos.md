@@ -4,14 +4,18 @@
 
 **Blocked by:** 07 Mata-mata: chaveamento
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Toda partida exige um vencedor antes de ser concluída.
-- [ ] O vencedor pode ser informado diretamente sem placar.
-- [ ] O placar é opcional e não pode representar empate.
-- [ ] Placar parcial ou vencedor ausente impede a finalização.
-- [ ] O vencedor avança automaticamente para a próxima partida.
-- [ ] Uma partida subsequente mostra as equipes determinadas pelos resultados anteriores.
-- [ ] O vencedor da partida final é identificado como campeão ao encerrar o torneio.
-- [ ] Correções e avanços são testados independentemente de Flask e HTTP.
+- [x] Toda partida exige um vencedor antes de ser concluída.
+- [x] O vencedor pode ser informado diretamente sem placar.
+- [x] O placar é opcional e não pode representar empate.
+- [x] Placar parcial ou vencedor ausente impede a finalização.
+- [x] O vencedor avança automaticamente para a próxima partida.
+- [x] Uma partida subsequente mostra as equipes determinadas pelos resultados anteriores.
+- [x] O vencedor da partida final é identificado como campeão ao encerrar o torneio.
+- [x] Correções e avanços são testados independentemente de Flask e HTTP.
+
+## Comments
+
+O caso de uso registra e corrige resultados do mata-mata sem Flask, valida vencedor e placar e propaga o vencedor à posição correspondente na fase seguinte. Correções são bloqueadas quando uma partida posterior já foi concluída. A interface permite registrar vencedores e placares, acompanhar o chaveamento até a final, encerrar o torneio após concluir as partidas e consultar o campeão. Os testes focados e regressões relacionadas passaram (42 testes); a suíte completa foi deixada para a coordenação.
 

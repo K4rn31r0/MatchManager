@@ -42,6 +42,17 @@ from server.core.use_cases.record_round_robin_result import RecordRoundRobinResu
 from server.core.use_cases.calculate_round_robin_standings import CalculateRoundRobinStandings
 from server.core.use_cases.finish_round_robin_tournament import FinishRoundRobinTournament
 from server.core.use_cases.list_round_robin_matches import ListRoundRobinMatches
+from server.core.use_cases.generate_knockout_bracket import (
+    GenerateKnockoutBracket,
+)
+from server.core.use_cases.get_knockout_bracket import GetKnockoutBracket
+from server.core.use_cases.start_knockout_tournament import (
+    StartKnockoutTournament,
+)
+from server.core.use_cases.record_knockout_result import RecordKnockoutResult
+from server.core.use_cases.finish_knockout_tournament import (
+    FinishKnockoutTournament,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_FILE = PROJECT_ROOT / "instance" / "matchmanager.json"
@@ -109,6 +120,29 @@ def create_app(data_file: Path | None = None) -> Flask:
                 match_repository,
             ),
             list_round_robin_matches=ListRoundRobinMatches(
+                tournament_repository,
+                match_repository,
+            ),
+            generate_knockout_bracket=GenerateKnockoutBracket(
+                tournament_repository,
+                registration_repository,
+                match_repository,
+                id_generator=_new_id,
+            ),
+            get_knockout_bracket=GetKnockoutBracket(
+                tournament_repository,
+                match_repository,
+            ),
+            start_knockout_tournament=StartKnockoutTournament(
+                tournament_repository,
+                registration_repository,
+                match_repository,
+            ),
+            record_knockout_result=RecordKnockoutResult(
+                tournament_repository,
+                match_repository,
+            ),
+            finish_knockout_tournament=FinishKnockoutTournament(
                 tournament_repository,
                 match_repository,
             ),

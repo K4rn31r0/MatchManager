@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from server.core.entities.tournament import (
+    KnockoutConfig,
     RoundRobinConfig,
     Tournament,
     TournamentFormat,
@@ -35,6 +36,7 @@ class TournamentViewModel:
     period: str
     participant_count: int
     round_robin: RoundRobinConfig | None
+    knockout: KnockoutConfig | None
 
 
 def present_tournament(
@@ -44,6 +46,7 @@ def present_tournament(
         id=tournament.id,
         participant_count=participant_count,
         round_robin=tournament.round_robin,
+        knockout=tournament.knockout,
         name=tournament.name,
         format_label=FORMAT_LABELS[tournament.tournament_format],
         status=tournament.status.value,
