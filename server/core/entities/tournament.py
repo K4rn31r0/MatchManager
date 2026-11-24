@@ -239,3 +239,19 @@ class Tournament:
             status=TournamentStatus.FINISHED,
             updated_at=finished_at,
         )
+
+    def finish_knockout(self, finished_at: datetime) -> "Tournament":
+        if self.status is not TournamentStatus.IN_PROGRESS:
+            raise InvalidTournamentError(
+                "Só é possível encerrar torneios em andamento."
+            )
+        if self.tournament_format is not TournamentFormat.KNOCKOUT:
+            raise InvalidTournamentError(
+                "O encerramento solicitado não corresponde ao formato "
+                "do torneio."
+            )
+        return replace(
+            self,
+            status=TournamentStatus.FINISHED,
+            updated_at=finished_at,
+        )

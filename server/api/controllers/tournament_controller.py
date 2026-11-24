@@ -59,6 +59,13 @@ from server.core.use_cases.get_knockout_bracket import GetKnockoutBracket
 from server.core.use_cases.start_knockout_tournament import (
     StartKnockoutTournament,
 )
+from server.core.use_cases.record_knockout_result import (
+    KnockoutResultInput,
+    RecordKnockoutResult,
+)
+from server.core.use_cases.finish_knockout_tournament import (
+    FinishKnockoutTournament,
+)
 
 
 class InvalidFormError(Exception):
@@ -85,6 +92,8 @@ def create_tournament_blueprint(
     generate_knockout_bracket: GenerateKnockoutBracket,
     get_knockout_bracket: GetKnockoutBracket,
     start_knockout_tournament: StartKnockoutTournament,
+    record_knockout_result: RecordKnockoutResult,
+    finish_knockout_tournament: FinishKnockoutTournament,
 ) -> Blueprint:
     """Build the tournament routes around the injected use cases."""
     blueprint = Blueprint("tournaments", __name__)
@@ -158,6 +167,8 @@ def create_tournament_blueprint(
                 standings = None
         else:
             knockout_bracket = get_knockout_bracket.execute(tournament_id)
+            if knockout_bracket is not None:
+                champion_team_id = knockout_bracket.champion_team_id
             participant_count = len(teams.registered)
             if participant_count >= 2:
                 bracket_size = 1 << (participant_count - 1).bit_length()
@@ -311,6 +322,46 @@ def create_tournament_blueprint(
     def start_knockout_tournament_route(tournament_id: str):
         try:
             start_knockout_tournament.execute(tournament_id)
+        except DomainError as error:
+            return render_detail(tournament_id, error.message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
+    @blueprint.post(
+        "/tournaments/<tournament_id>/knockout/matches/<match_id>/result"
+    )
+    def record_knockout_result_route(tournament_id: str, match_id: str):
+        try:
+            result_value = request.form.get("result", "")
+            result = MatchResult(result_value) if result_value else None
+            record_knockout_result.execute(
+                tournament_id,
+                match_id,
+                KnockoutResultInput(
+                    result=result,
+                    first_score=_parse_optional_score(
+                        request.form, "first_score",
+                    ),
+                    second_score=_parse_optional_score(
+                        request.form, "second_score",
+                    ),
+                ),
+            )
+        except (InvalidFormError, ValueError, DomainError) as error:
+            message = (
+                error.message if isinstance(error, DomainError)
+                else (
+                    error.message
+                    if isinstance(error, InvalidFormError)
+                    else "Informe um resultado válido."
+                )
+            )
+            return render_detail(tournament_id, message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
+    @blueprint.post("/tournaments/<tournament_id>/knockout/finish")
+    def finish_knockout_tournament_route(tournament_id: str):
+        try:
+            finish_knockout_tournament.execute(tournament_id)
         except DomainError as error:
             return render_detail(tournament_id, error.message), 400
         return redirect(url_for(".detail", tournament_id=tournament_id))

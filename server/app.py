@@ -49,6 +49,10 @@ from server.core.use_cases.get_knockout_bracket import GetKnockoutBracket
 from server.core.use_cases.start_knockout_tournament import (
     StartKnockoutTournament,
 )
+from server.core.use_cases.record_knockout_result import RecordKnockoutResult
+from server.core.use_cases.finish_knockout_tournament import (
+    FinishKnockoutTournament,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_FILE = PROJECT_ROOT / "instance" / "matchmanager.json"
@@ -132,6 +136,14 @@ def create_app(data_file: Path | None = None) -> Flask:
             start_knockout_tournament=StartKnockoutTournament(
                 tournament_repository,
                 registration_repository,
+                match_repository,
+            ),
+            record_knockout_result=RecordKnockoutResult(
+                tournament_repository,
+                match_repository,
+            ),
+            finish_knockout_tournament=FinishKnockoutTournament(
+                tournament_repository,
                 match_repository,
             ),
         )

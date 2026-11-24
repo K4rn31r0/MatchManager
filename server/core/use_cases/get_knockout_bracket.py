@@ -1,6 +1,7 @@
 """Read a saved knockout bracket for display."""
 
-from server.core.entities.tournament import TournamentFormat
+from server.core.entities.match import MatchResult, MatchStatus
+from server.core.entities.tournament import TournamentFormat, TournamentStatus
 from server.core.errors import InvalidTournamentError
 from server.core.interfaces.match_repository import MatchRepository
 from server.core.interfaces.tournament_repository import TournamentRepository
@@ -33,9 +34,27 @@ class GetKnockoutBracket:
             return None
 
         match_groups: dict[int, list[Match]] = {}
-        for match in self._matches.list_for_tournament(tournament_id):
+        matches = self._matches.list_for_tournament(tournament_id)
+        for match in matches:
             match_groups.setdefault(match.round_number, []).append(match)
         round_count = bracket_size(len(config.initial_order)).bit_length() - 1
+        champion_team_id = None
+        final_matches = match_groups.get(round_count, [])
+        if (
+            tournament.status is TournamentStatus.FINISHED
+            and len(final_matches) == 1
+        ):
+            final = final_matches[0]
+            if (
+                final.status is MatchStatus.COMPLETED
+                and final.result is MatchResult.FIRST_WIN
+            ):
+                champion_team_id = final.first_team_id
+            elif (
+                final.status is MatchStatus.COMPLETED
+                and final.result is MatchResult.SECOND_WIN
+            ):
+                champion_team_id = final.second_team_id
         return KnockoutBracket(
             rounds=tuple(
                 KnockoutRound(
@@ -49,5 +68,6 @@ class GetKnockoutBracket:
                     ),
                 )
                 for number in range(1, round_count + 1)
-            )
+            ),
+            champion_team_id=champion_team_id,
         )

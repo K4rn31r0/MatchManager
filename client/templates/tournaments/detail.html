@@ -120,10 +120,34 @@
       <p>{{ team_names.get(match.first_team_id, 'A definir') if match.first_team_id else 'A definir' }}
         × {{ team_names.get(match.second_team_id, 'A definir') if match.second_team_id else 'A definir' }}</p>
       <p>{% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
+      {% if tournament.status == 'in_progress' and match.first_team_id and match.second_team_id %}
+      <form method="post" action="{{ url_for('tournaments.record_knockout_result_route', tournament_id=tournament.id, match_id=match.id) }}">
+        <label>Vencedor
+          <select name="result">
+            <option value="first_win"{% if match.result and match.result.value == 'first_win' %} selected{% endif %}>{{ team_names.get(match.first_team_id, match.first_team_id) }}</option>
+            <option value="second_win"{% if match.result and match.result.value == 'second_win' %} selected{% endif %}>{{ team_names.get(match.second_team_id, match.second_team_id) }}</option>
+          </select>
+        </label>
+        <label>Placar de {{ team_names.get(match.first_team_id, match.first_team_id) }} <input name="first_score" type="number" min="0" value="{{ match.first_score if match.first_score is not none else '' }}"></label>
+        <label>Placar de {{ team_names.get(match.second_team_id, match.second_team_id) }} <input name="second_score" type="number" min="0" value="{{ match.second_score if match.second_score is not none else '' }}"></label>
+        <button class="button" type="submit">Salvar resultado</button>
+      </form>
+      {% endif %}
     </article>
     {% endfor %}
   </section>
   {% endfor %}
+  {% if tournament.status == 'in_progress' and knockout_bracket.rounds %}
+    {% set final_matches = knockout_bracket.rounds[-1].matches %}
+    {% if final_matches and final_matches[0].status.value == 'completed' %}
+    <form method="post" action="{{ url_for('tournaments.finish_knockout_tournament_route', tournament_id=tournament.id) }}">
+      <button class="button" type="submit">Encerrar torneio</button>
+    </form>
+    {% endif %}
+  {% endif %}
+  {% if champion_team_id %}
+  <p><strong>Campeão: {{ team_names.get(champion_team_id, champion_team_id) }}</strong></p>
+  {% endif %}
 </section>
 {% endif %}
 {% if tournament.format_label == 'Pontos corridos' and matches %}

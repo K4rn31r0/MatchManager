@@ -16,6 +16,7 @@ class KnockoutRound:
 @dataclass(frozen=True)
 class KnockoutBracket:
     rounds: tuple[KnockoutRound, ...]
+    champion_team_id: str | None = None
 
 
 def bracket_size(team_count: int) -> int:
