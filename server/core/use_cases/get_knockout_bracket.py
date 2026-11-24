@@ -9,6 +9,7 @@ from server.core.entities.knockout_bracket import (
     KnockoutBracket,
     KnockoutRound,
     bracket_size,
+    knockout_round_count,
 )
 from server.core.entities.match import Match
 from server.core.use_cases.get_tournament import GetTournament
@@ -37,7 +38,7 @@ class GetKnockoutBracket:
         matches = self._matches.list_for_tournament(tournament_id)
         for match in matches:
             match_groups.setdefault(match.round_number, []).append(match)
-        round_count = bracket_size(len(config.initial_order)).bit_length() - 1
+        round_count = knockout_round_count(len(config.initial_order))
         champion_team_id = None
         final_matches = match_groups.get(round_count, [])
         if (

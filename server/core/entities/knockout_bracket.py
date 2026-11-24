@@ -22,6 +22,9 @@ class KnockoutBracket:
 def bracket_size(team_count: int) -> int:
     return 1 << (team_count - 1).bit_length()
 
+def knockout_round_count(team_count: int) -> int:
+    return bracket_size(team_count).bit_length() - 1
+
 
 def build_knockout_bracket(
     tournament_id: str,

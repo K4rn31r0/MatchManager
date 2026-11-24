@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, replace
 
-from server.core.entities.knockout_bracket import bracket_size
+from server.core.entities.knockout_bracket import bracket_size, knockout_round_count
 from server.core.entities.match import Match, MatchResult, MatchStatus
 from server.core.entities.tournament import (
     Tournament,
@@ -114,7 +114,7 @@ class RecordKnockoutResult:
             raise InvalidTournamentError(
                 "O chaveamento da partida não é válido."
             )
-        round_count = bracket_size(len(config.initial_order)).bit_length() - 1
+        round_count = knockout_round_count(len(config.initial_order))
         if not 1 <= match.round_number <= round_count:
             raise InvalidTournamentError(
                 "A fase da partida não é válida no chaveamento."
