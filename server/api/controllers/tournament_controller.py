@@ -12,7 +12,10 @@ from server.api.presenters.tournament_presenter import (
     present_tournament,
     present_tournaments,
 )
+from server.core.entities.team import Team
 from server.core.entities.tournament import (
+    KnockoutByeStrategy,
+    KnockoutOrderMode,
     RoundRobinMode,
     TournamentFormat,
     TournamentStatus,
@@ -48,6 +51,14 @@ from server.core.use_cases.finish_round_robin_tournament import (
 from server.core.use_cases.list_round_robin_matches import (
     ListRoundRobinMatches,
 )
+from server.core.use_cases.generate_knockout_bracket import (
+    GenerateKnockoutBracket,
+    KnockoutBracketInput,
+)
+from server.core.use_cases.get_knockout_bracket import GetKnockoutBracket
+from server.core.use_cases.start_knockout_tournament import (
+    StartKnockoutTournament,
+)
 
 
 class InvalidFormError(Exception):
@@ -71,6 +82,9 @@ def create_tournament_blueprint(
     calculate_round_robin_standings: CalculateRoundRobinStandings,
     finish_round_robin_tournament: FinishRoundRobinTournament,
     list_round_robin_matches: ListRoundRobinMatches,
+    generate_knockout_bracket: GenerateKnockoutBracket,
+    get_knockout_bracket: GetKnockoutBracket,
+    start_knockout_tournament: StartKnockoutTournament,
 ) -> Blueprint:
     """Build the tournament routes around the injected use cases."""
     blueprint = Blueprint("tournaments", __name__)
@@ -123,11 +137,17 @@ def create_tournament_blueprint(
             return render_new(form=request.form, error=error.message), 400
         return redirect(url_for("tournaments.index"))
 
-    def render_detail(tournament_id: str, error: str | None = None) -> str:
+    def render_detail(
+        tournament_id: str,
+        error: str | None = None,
+        form: MultiDict[str, str] | None = None,
+    ) -> str:
         teams = registrations.list(tournament_id)
         matches = []
         standings = None
         champion_team_id = None
+        knockout_bracket = None
+        knockout_bye_count = 0
         if teams.tournament.tournament_format is TournamentFormat.ROUND_ROBIN:
             try:
                 matches = list_round_robin_matches.execute(tournament_id)
@@ -136,6 +156,24 @@ def create_tournament_blueprint(
             except DomainError:
                 matches = []
                 standings = None
+        else:
+            knockout_bracket = get_knockout_bracket.execute(tournament_id)
+            participant_count = len(teams.registered)
+            if participant_count >= 2:
+                bracket_size = 1 << (participant_count - 1).bit_length()
+                knockout_bye_count = bracket_size - participant_count
+        registered_ids = [team.id for team in teams.registered]
+        knockout_config = teams.tournament.knockout
+        team_order = registered_ids
+        if knockout_config is not None:
+            order_has_all_teams = (
+                len(knockout_config.initial_order) == len(registered_ids)
+            )
+            order_uses_registered_teams = (
+                set(knockout_config.initial_order) == set(registered_ids)
+            )
+            if order_has_all_teams and order_uses_registered_teams:
+                team_order = knockout_config.initial_order
         return render_template(
             "tournaments/detail.html",
             tournament=present_tournament(teams.tournament, len(teams.registered)),
@@ -143,7 +181,15 @@ def create_tournament_blueprint(
             matches=matches,
             standings=standings,
             champion_team_id=champion_team_id,
+            knockout_bracket=knockout_bracket,
+            knockout_bye_count=knockout_bye_count,
+            team_names={team.id: team.name for team in teams.registered},
+            team_positions={
+                team_id: position
+                for position, team_id in enumerate(team_order, start=1)
+            },
             error=error,
+            form=form or MultiDict(),
         )
 
     @blueprint.get("/tournaments/<tournament_id>")
@@ -243,6 +289,32 @@ def create_tournament_blueprint(
             return render_detail(tournament_id, error.message), 400
         return redirect(url_for(".detail", tournament_id=tournament_id))
 
+    @blueprint.post("/tournaments/<tournament_id>/knockout/generate")
+    def generate_knockout_bracket_route(tournament_id: str):
+        try:
+            teams = registrations.list(tournament_id)
+            data = _parse_knockout_form(request.form, teams.registered)
+            generate_knockout_bracket.execute(tournament_id, data)
+        except (InvalidFormError, ValueError, DomainError) as error:
+            message = (
+                error.message if isinstance(error, DomainError)
+                else (
+                    error.message
+                    if isinstance(error, InvalidFormError)
+                    else "Informe uma configuração de chaveamento válida."
+                )
+            )
+            return render_detail(tournament_id, message, request.form), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
+    @blueprint.post("/tournaments/<tournament_id>/knockout/start")
+    def start_knockout_tournament_route(tournament_id: str):
+        try:
+            start_knockout_tournament.execute(tournament_id)
+        except DomainError as error:
+            return render_detail(tournament_id, error.message), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
     @blueprint.post("/tournaments/<tournament_id>/matches/<match_id>/result")
     def record_round_robin_result_route(tournament_id: str, match_id: str):
         try:
@@ -296,6 +368,52 @@ def _parse_create_form(form: MultiDict[str, str]) -> CreateTournamentInput:
         modality=form.get("modality"),
         start_date=_parse_date(form.get("start_date", ""), "início"),
         end_date=_parse_date(form.get("end_date", ""), "término"),
+    )
+
+
+def _parse_knockout_form(
+    form: MultiDict[str, str],
+    registered: list[Team],
+) -> KnockoutBracketInput:
+    try:
+        order_mode = KnockoutOrderMode(form.get("order_mode", ""))
+        bye_strategy = KnockoutByeStrategy(form.get("bye_strategy", ""))
+    except ValueError:
+        raise InvalidFormError(
+            "Escolha a ordem inicial e a estratégia de bye."
+        ) from None
+
+    order: tuple[str, ...] = ()
+    if order_mode is KnockoutOrderMode.MANUAL:
+        positions: list[tuple[int, str]] = []
+        try:
+            positions = [
+                (int(form.get(f"team_order_{team.id}", "")), team.id)
+                for team in registered
+            ]
+        except ValueError:
+            raise InvalidFormError(
+                "Informe uma posição manual para cada equipe."
+            ) from None
+        position_values = [position for position, _ in positions]
+        has_non_positive_position = any(
+            position < 1 for position in position_values
+        )
+        has_duplicate_positions = (
+            len(set(position_values)) != len(position_values)
+        )
+        if has_non_positive_position or has_duplicate_positions:
+            raise InvalidFormError(
+                "Cada equipe precisa ter uma posição manual única."
+            )
+        order = tuple(
+            team_id for _, team_id in sorted(positions)
+        )
+    return KnockoutBracketInput(
+        order_mode=order_mode,
+        initial_order=order,
+        bye_strategy=bye_strategy,
+        bye_team_ids=tuple(form.getlist("bye_team_ids")),
     )
 
 

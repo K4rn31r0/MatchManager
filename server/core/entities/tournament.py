@@ -37,6 +37,17 @@ class TieBreakerDirection(Enum):
     NEGATIVE = "negative"
 
 
+class KnockoutOrderMode(Enum):
+    MANUAL = "manual"
+    DRAW = "draw"
+
+
+class KnockoutByeStrategy(Enum):
+    MANUAL = "manual"
+    DRAW = "draw"
+    PERFORMANCE = "performance"
+
+
 @dataclass(frozen=True, kw_only=True)
 class TieBreaker:
     name: str
@@ -59,6 +70,14 @@ class RoundRobinConfig:
 
 
 @dataclass(frozen=True, kw_only=True)
+class KnockoutConfig:
+    order_mode: KnockoutOrderMode
+    initial_order: tuple[str, ...]
+    bye_strategy: KnockoutByeStrategy
+    bye_team_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, kw_only=True)
 class Tournament:
     """A sports competition organized by the user.
 
@@ -75,6 +94,7 @@ class Tournament:
     end_date: date | None = None
     updated_at: datetime | None = None
     round_robin: RoundRobinConfig | None = None
+    knockout: KnockoutConfig | None = None
 
     @property
     def last_activity(self) -> datetime:
@@ -162,6 +182,41 @@ class Tournament:
                 "É necessário cadastrar pelo menos um critério de desempate."
             )
         return replace(self, round_robin=config, updated_at=updated_at)
+
+    def configure_knockout(
+        self,
+        *,
+        config: KnockoutConfig,
+        updated_at: datetime,
+    ) -> "Tournament":
+        if self.status is not TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível configurar torneios em rascunho."
+            )
+        if self.tournament_format is not TournamentFormat.KNOCKOUT:
+            raise InvalidTournamentError(
+                "Esta configuração só pode ser usada em mata-mata."
+            )
+        return replace(self, knockout=config, updated_at=updated_at)
+
+    def start_knockout(self, started_at: datetime) -> "Tournament":
+        if self.status is not TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível iniciar torneios em rascunho."
+            )
+        if self.tournament_format is not TournamentFormat.KNOCKOUT:
+            raise InvalidTournamentError(
+                "O início solicitado não corresponde ao formato do torneio."
+            )
+        if self.knockout is None:
+            raise InvalidTournamentError(
+                "Gere um chaveamento válido antes de iniciar o torneio."
+            )
+        return replace(
+            self,
+            status=TournamentStatus.IN_PROGRESS,
+            updated_at=started_at,
+        )
 
     def has_equivalent_name(self, name: str) -> bool:
         """Tell whether a name clashes with this tournament's name.

@@ -4,6 +4,9 @@ from datetime import date, datetime
 from typing import Any
 
 from server.core.entities.tournament import (
+    KnockoutByeStrategy,
+    KnockoutConfig,
+    KnockoutOrderMode,
     RoundRobinConfig,
     RoundRobinMode,
     StatisticField,
@@ -98,6 +101,13 @@ def _to_record(tournament: Tournament) -> dict[str, Any]:
                 item.name for item in tournament.round_robin.statistic_fields
             ],
         }
+    if tournament.knockout is not None:
+        record["knockout"] = {
+            "order_mode": tournament.knockout.order_mode.value,
+            "initial_order": list(tournament.knockout.initial_order),
+            "bye_strategy": tournament.knockout.bye_strategy.value,
+            "bye_team_ids": list(tournament.knockout.bye_team_ids),
+        }
     return record
 
 
@@ -123,6 +133,16 @@ def _from_record(record: dict[str, Any]) -> Tournament:
         )
         if round_robin_record is not None else None
     )
+    knockout_record = record.get("knockout")
+    knockout = (
+        KnockoutConfig(
+            order_mode=KnockoutOrderMode(knockout_record["order_mode"]),
+            initial_order=tuple(knockout_record["initial_order"]),
+            bye_strategy=KnockoutByeStrategy(knockout_record["bye_strategy"]),
+            bye_team_ids=tuple(knockout_record["bye_team_ids"]),
+        )
+        if knockout_record is not None else None
+    )
     return Tournament(
         id=record["id"],
         name=record["name"],
@@ -137,6 +157,7 @@ def _from_record(record: dict[str, Any]) -> Tournament:
         start_date=_text_to_date(record.get("start_date")),
         end_date=_text_to_date(record.get("end_date")),
         round_robin=round_robin,
+        knockout=knockout,
     )
 
 

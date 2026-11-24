@@ -62,6 +62,70 @@
   </form>
 </section>
 {% endif %}
+{% if tournament.status == 'draft' and tournament.format_label == 'Mata-mata' %}
+<section class="card">
+  <h2>Configuração do chaveamento</h2>
+  <form method="post" action="{{ url_for('tournaments.generate_knockout_bracket_route', tournament_id=tournament.id) }}">
+    <label>Ordem inicial
+      <select name="order_mode">
+        <option value="manual"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else 'manual') == 'manual' %} selected{% endif %}>Ordem manual</option>
+        <option value="draw"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sortear ordem</option>
+      </select>
+    </label>
+    <fieldset>
+      <legend>Equipes na ordem inicial</legend>
+      {% for team in registered %}
+      <label>{{ team.name }}
+        <input type="number" min="1" name="team_order_{{ team.id }}" value="{{ form.get('team_order_' ~ team.id, team_positions[team.id]) }}">
+      </label>
+      {% endfor %}
+    </fieldset>
+    <label>Distribuição de byes
+      <select name="bye_strategy">
+        <option value="performance"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else 'performance') == 'performance' %} selected{% endif %}>Prioridade por desempenho (ordem inicial)</option>
+        <option value="manual"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'manual' %} selected{% endif %}>Escolha manual</option>
+        <option value="draw"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sorteio</option>
+      </select>
+    </label>
+    <fieldset>
+      <legend>Equipes priorizadas manualmente para bye ({{ knockout_bye_count }} necessárias)</legend>
+      {% for team in registered %}
+      <label>
+        <input type="checkbox" name="bye_team_ids" value="{{ team.id }}"{% if ('bye_strategy' in form and team.id in form.getlist('bye_team_ids')) or ('bye_strategy' not in form and tournament.knockout and team.id in tournament.knockout.bye_team_ids) %} checked{% endif %}>
+        {{ team.name }}
+      </label>
+      {% endfor %}
+    </fieldset>
+    <button class="button" type="submit">Gerar chaveamento</button>
+  </form>
+  {% if knockout_bracket %}
+  <form method="post" action="{{ url_for('tournaments.start_knockout_tournament_route', tournament_id=tournament.id) }}">
+    <button class="button button-secondary" type="submit">Iniciar torneio</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% if knockout_bracket %}
+<section class="card">
+  <h2>Chaveamento</h2>
+  {% for round_data in knockout_bracket.rounds %}
+  <section>
+    <h3>Fase {{ round_data.number }}</h3>
+    {% for team_id in round_data.bye_team_ids %}
+    <p>Avançou por bye: {{ team_names.get(team_id, team_id) }}</p>
+    {% endfor %}
+    {% for match in round_data.matches %}
+    <article>
+      <h4>Partida {{ match.bracket_position }}</h4>
+      <p>{{ team_names.get(match.first_team_id, 'A definir') if match.first_team_id else 'A definir' }}
+        × {{ team_names.get(match.second_team_id, 'A definir') if match.second_team_id else 'A definir' }}</p>
+      <p>{% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</section>
+{% endif %}
 {% if tournament.format_label == 'Pontos corridos' and matches %}
 <section class="card">
   <h2>Partidas</h2>

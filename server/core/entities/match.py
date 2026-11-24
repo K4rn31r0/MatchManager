@@ -20,8 +20,9 @@ class Match:
     id: str
     tournament_id: str
     round_number: int
-    first_team_id: str
-    second_team_id: str
+    first_team_id: str | None
+    second_team_id: str | None
+    bracket_position: int | None = None
     status: MatchStatus = MatchStatus.PENDING
     result: MatchResult | None = None
     first_score: int | None = None
@@ -38,6 +39,8 @@ class Match:
         first_team_stats: dict[str, int] | None,
         second_team_stats: dict[str, int] | None,
     ) -> "Match":
+        if self.first_team_id is None or self.second_team_id is None:
+            raise ValueError("partida aguardando equipes")
         if (first_score is None) != (second_score is None):
             raise ValueError("placar completo")
         if first_score is not None and second_score is not None:
