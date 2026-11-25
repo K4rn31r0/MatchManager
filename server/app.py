@@ -41,7 +41,8 @@ from server.core.use_cases.generate_round_robin_calendar import GenerateRoundRob
 from server.core.use_cases.record_round_robin_result import RecordRoundRobinResult
 from server.core.use_cases.calculate_round_robin_standings import CalculateRoundRobinStandings
 from server.core.use_cases.finish_round_robin_tournament import FinishRoundRobinTournament
-from server.core.use_cases.list_round_robin_matches import ListRoundRobinMatches
+from server.core.use_cases.list_tournament_matches import ListTournamentMatches
+from server.core.use_cases.schedule_match import ScheduleMatch
 from server.core.use_cases.generate_knockout_bracket import (
     GenerateKnockoutBracket,
 )
@@ -140,7 +141,11 @@ def create_app(data_file: Path | None = None) -> Flask:
                 tournament_repository,
                 match_repository,
             ),
-            list_round_robin_matches=ListRoundRobinMatches(
+            list_tournament_matches=ListTournamentMatches(
+                tournament_repository,
+                match_repository,
+            ),
+            schedule_match=ScheduleMatch(
                 tournament_repository,
                 match_repository,
             ),

@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% block title %}Editar {{ tournament.name }} · MatchManager{% endblock %}
 {% block content %}
+<p class="breadcrumb"><a href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">← {{ tournament.name }}</a></p>
 <section class="card">
   <h1>Editar torneio</h1>
   {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}

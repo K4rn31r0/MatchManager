@@ -250,6 +250,16 @@ class Tournament:
                 "Só é possível registrar resultados em torneios iniciados."
             )
 
+    def ensure_accepts_schedule(self) -> None:
+        """Match dates and locations are set once the matches are final.
+
+        Draft matches are only a preview and may be regenerated on start.
+        """
+        if self.status is TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível definir data e local em torneios iniciados."
+            )
+
     def has_equivalent_name(self, name: str) -> bool:
         """Tell whether a name clashes with this tournament's name.
 

@@ -153,3 +153,15 @@ Após a revisão obrigatória, corrigi o encerramento para rejeitar também part
 > Vamos focar na 9 antes da 10
 
 **O que foi feito:** Criado o caso de uso `StartTournament`, que inicia qualquer torneio delegando a uma estratégia por formato (Strategy/OCP): `StartRoundRobinTournament` (novo, pois pontos corridos não tinham início) valida rascunho, configuração e pelo menos duas equipes, gera o calendário completo e muda o status para em andamento; o mata-mata reutiliza `StartKnockoutTournament`. A entidade `Tournament` ganhou `start()` e `ensure_accepts_results()`, usado pelos dois casos de uso de resultado, permitindo correções em torneios em andamento ou encerrados sem mudar o status. No mata-mata, o bloqueio de correção passou a considerar apenas a partida subsequente que depende do resultado, o que permite corrigir a final de um torneio encerrado. A interface ganhou a página de confirmação de início com formato, regras e participantes. Testes novos cobrem início, bloqueios de configuração e inscrição, correções, recálculo da classificação e encerramento com fakes, além do fluxo web; a suíte completa passou (196 testes).
+
+## 011 — Implementação da issue 10: Experiência completa mobile
+
+**Data:** 2026-11-25
+**Ferramenta:** Claude Code (Claude Opus 5.5)
+**Branch:** `issues-09-e-10-ciclo-e-mobile`
+
+**Prompt:**
+
+> Sim, vamos ter que fazer as issues 9 e 10, depois dar push e commit e e testar se a aplicação está funcionando. Pode ir.
+
+**O que foi feito:** A página do torneio passou a ter abas (Partidas, Classificação, Equipes e Configuração/Regras) sem JavaScript, usando âncoras com `:target` e `:has()` como melhoria progressiva. Foram criados os casos de uso `ListTournamentMatches` (filtro por rodada/fase e status, comum aos dois formatos) e `ScheduleMatch` (data e local opcionais, independentes do resultado), com a entidade `Match` ganhando `schedule()` e a persistência JSON os novos campos. Um presenter de partidas formata placar, vencedor, status e nomes de fase. A interface ganhou navegação com seção atual marcada, links de retorno, estados vazios, confirmação de encerramento com `<details>`, formulários que reabrem com os valores digitados em caso de erro e CSS mobile-first com tabela rolável. A suíte completa passou (220 testes) e a aplicação foi testada ponta a ponta no servidor real, incluindo capturas de tela em largura de celular e desktop.

@@ -1,7 +1,10 @@
 """Domain entity for tournament matches."""
 
 from dataclasses import dataclass, replace
+from datetime import date
 from enum import Enum
+
+from server.core.entities.names import optional_text
 
 
 class MatchStatus(Enum):
@@ -29,6 +32,29 @@ class Match:
     second_score: int | None = None
     first_team_stats: dict[str, int] | None = None
     second_team_stats: dict[str, int] | None = None
+    scheduled_date: date | None = None
+    location: str | None = None
+
+    @property
+    def has_teams(self) -> bool:
+        return (
+            self.first_team_id is not None
+            and self.second_team_id is not None
+        )
+
+    def schedule(
+        self, *, scheduled_date: date | None, location: str | None,
+    ) -> "Match":
+        """Return the match with an optional date and location.
+
+        Scheduling is independent from the result: it neither requires nor
+        changes it. A blank location is treated as absent.
+        """
+        return replace(
+            self,
+            scheduled_date=scheduled_date,
+            location=optional_text(location),
+        )
 
     def record_result(
         self,

@@ -1,242 +1,354 @@
 {% extends "base.html" %}
 {% block title %}{{ tournament.name }} · MatchManager{% endblock %}
+
+{% macro field_value(match, name, persisted) -%}
+  {%- if open_match == match.id and name in form -%}{{ form.get(name) }}
+  {%- elif persisted is not none -%}{{ persisted }}{%- endif -%}
+{%- endmacro %}
+
+{% macro selected_result(match, value) -%}
+  {%- if open_match == match.id and 'result' in form -%}
+    {%- if form.get('result') == value %} selected{% endif -%}
+  {%- elif match.result == value %} selected{% endif -%}
+{%- endmacro %}
+
 {% block content %}
-<section class="card">
-  <h1 style="white-space: pre-wrap">{{ tournament.name }}</h1>
-  <p>{{ tournament.format_label }} · {{ tournament.status_label }}</p>
-  <p>{{ tournament.modality }} · {{ tournament.period }}</p>
+<p class="breadcrumb"><a href="{{ url_for('tournaments.index') }}">← Torneios</a></p>
+
+<section class="card tournament-summary">
+  <div class="tournament-header">
+    <h1 class="tournament-name">{{ tournament.name }}</h1>
+    <span class="badge badge-{{ tournament.status }}">{{ tournament.status_label }}</span>
+  </div>
+  <p class="meta">{{ tournament.format_label }} · {{ tournament.modality }}</p>
+  <p class="meta">{{ tournament.period }} · Equipes inscritas: {{ tournament.participant_count }}</p>
+  {% if champion_name %}
+  <p class="champion-banner"><span aria-hidden="true">🏆</span> <strong>Campeão: {{ champion_name }}</strong></p>
+  {% endif %}
   <div class="actions">
     {% if tournament.status == 'draft' %}
+    <a class="button" href="{{ url_for('tournaments.confirm_start', tournament_id=tournament.id) }}">Iniciar torneio</a>
     <a class="button button-secondary" href="{{ url_for('tournaments.edit', tournament_id=tournament.id) }}">Editar torneio</a>
     {% endif %}
     <a class="button button-danger" href="{{ url_for('tournaments.delete', tournament_id=tournament.id) }}">Excluir torneio</a>
   </div>
 </section>
-{% if tournament.status == 'draft' and tournament.format_label == 'Pontos corridos' %}
-<section class="card">
-  <h2>Configuração de pontos corridos</h2>
-  <form method="post" action="{{ url_for('tournaments.configure_round_robin_route', tournament_id=tournament.id) }}">
-    <label>Turnos
-      <select name="mode">
-        <option value="single"{% if tournament.round_robin and tournament.round_robin.mode.value == 'single' %} selected{% endif %}>Turno único</option>
-        <option value="double"{% if tournament.round_robin and tournament.round_robin.mode.value == 'double' %} selected{% endif %}>Ida e volta</option>
-      </select>
-    </label>
-    <label>Vitória <input name="win_points" type="number" value="{{ tournament.round_robin.win_points if tournament.round_robin else 3 }}"></label>
-    <label>Empate <input name="draw_points" type="number" value="{{ tournament.round_robin.draw_points if tournament.round_robin else 1 }}"></label>
-    <label>Derrota <input name="loss_points" type="number" value="{{ tournament.round_robin.loss_points if tournament.round_robin else 0 }}"></label>
-    <label>Critério de desempate
-      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[0].name if tournament.round_robin and tournament.round_robin.tie_breakers else '' }}">
-    </label>
-    <label>Direção
-      <select name="tie_breaker_direction">
-        <option value="positive"{% if tournament.round_robin and tournament.round_robin.tie_breakers and tournament.round_robin.tie_breakers[0].direction.value == 'positive' %} selected{% endif %}>Favor números maiores</option>
-        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers and tournament.round_robin.tie_breakers[0].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
-      </select>
-    </label>
-    <label>Segundo critério de desempate
-      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[1].name if tournament.round_robin and tournament.round_robin.tie_breakers | length > 1 else '' }}">
-    </label>
-    <label>Direção do segundo critério
-      <select name="tie_breaker_direction">
-        <option value="positive">Favor números maiores</option>
-        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers | length > 1 and tournament.round_robin.tie_breakers[1].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
-      </select>
-    </label>
-    <label>Terceiro critério de desempate
-      <input name="tie_breaker_name" value="{{ tournament.round_robin.tie_breakers[2].name if tournament.round_robin and tournament.round_robin.tie_breakers | length > 2 else '' }}">
-    </label>
-    <label>Direção do terceiro critério
-      <select name="tie_breaker_direction">
-        <option value="positive">Favor números maiores</option>
-        <option value="negative"{% if tournament.round_robin and tournament.round_robin.tie_breakers | length > 2 and tournament.round_robin.tie_breakers[2].direction.value == 'negative' %} selected{% endif %}>Favor números menores</option>
-      </select>
-    </label>
-    <label>Campos estatísticos (separados por vírgula)
-      <input name="statistic_fields" value="{% if tournament.round_robin %}{% for field in tournament.round_robin.statistic_fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}">
-    </label>
-    <button class="button" type="submit">Salvar configuração</button>
-  </form>
-  <form method="post" action="{{ url_for('tournaments.generate_round_robin_calendar_route', tournament_id=tournament.id) }}">
-    <button class="button button-secondary" type="submit">Pré-visualizar calendário</button>
-  </form>
-  {% if tournament.round_robin %}
-  <p><a class="button" href="{{ url_for('tournaments.confirm_start', tournament_id=tournament.id) }}">Iniciar torneio</a></p>
-  {% endif %}
-</section>
-{% endif %}
-{% if tournament.status == 'draft' and tournament.format_label == 'Mata-mata' %}
-<section class="card">
-  <h2>Configuração do chaveamento</h2>
-  <form method="post" action="{{ url_for('tournaments.generate_knockout_bracket_route', tournament_id=tournament.id) }}">
-    <label>Ordem inicial
-      <select name="order_mode">
-        <option value="manual"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else 'manual') == 'manual' %} selected{% endif %}>Ordem manual</option>
-        <option value="draw"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sortear ordem</option>
-      </select>
-    </label>
-    <fieldset>
-      <legend>Equipes na ordem inicial</legend>
-      {% for team in registered %}
-      <label>{{ team.name }}
-        <input type="number" min="1" name="team_order_{{ team.id }}" value="{{ form.get('team_order_' ~ team.id, team_positions[team.id]) }}">
-      </label>
-      {% endfor %}
-    </fieldset>
-    <label>Distribuição de byes
-      <select name="bye_strategy">
-        <option value="performance"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else 'performance') == 'performance' %} selected{% endif %}>Prioridade por desempenho (ordem inicial)</option>
-        <option value="manual"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'manual' %} selected{% endif %}>Escolha manual</option>
-        <option value="draw"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sorteio</option>
-      </select>
-    </label>
-    <fieldset>
-      <legend>Equipes priorizadas manualmente para bye ({{ knockout_bye_count }} necessárias)</legend>
-      {% for team in registered %}
-      <label>
-        <input type="checkbox" name="bye_team_ids" value="{{ team.id }}"{% if ('bye_strategy' in form and team.id in form.getlist('bye_team_ids')) or ('bye_strategy' not in form and tournament.knockout and team.id in tournament.knockout.bye_team_ids) %} checked{% endif %}>
-        {{ team.name }}
-      </label>
-      {% endfor %}
-    </fieldset>
-    <button class="button" type="submit">Gerar chaveamento</button>
-  </form>
-  {% if knockout_bracket %}
-  <p><a class="button" href="{{ url_for('tournaments.confirm_start', tournament_id=tournament.id) }}">Iniciar torneio</a></p>
-  {% endif %}
-</section>
-{% endif %}
-{% if knockout_bracket %}
-<section class="card">
-  <h2>Chaveamento</h2>
-  {% for round_data in knockout_bracket.rounds %}
-  <section>
-    <h3>Fase {{ round_data.number }}</h3>
-    {% for team_id in round_data.bye_team_ids %}
-    <p>Avançou por bye: {{ team_names.get(team_id, team_id) }}</p>
+
+{% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+
+{% set tabs = [('partidas', 'Partidas')] %}
+{% if is_round_robin and started %}{% set tabs = tabs + [('classificacao', 'Classificação')] %}{% endif %}
+{% set tabs = tabs + [('equipes', 'Equipes'), ('configuracao', 'Configuração' if tournament.status == 'draft' else 'Regras')] %}
+
+<div class="tabs">
+  <nav class="tab-nav" aria-label="Seções do torneio">
+    {% for anchor, label in tabs %}
+    <a class="tab-link tab-link-{{ anchor }}{% if active_tab == anchor %} is-default{% endif %}" href="#{{ anchor }}">{{ label }}</a>
     {% endfor %}
-    {% for match in round_data.matches %}
-    <article>
-      <h4>Partida {{ match.bracket_position }}</h4>
-      <p>{{ team_names.get(match.first_team_id, 'A definir') if match.first_team_id else 'A definir' }}
-        × {{ team_names.get(match.second_team_id, 'A definir') if match.second_team_id else 'A definir' }}</p>
-      <p>{% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
-      {% if tournament.status != 'draft' and match.first_team_id and match.second_team_id %}
-      <form method="post" action="{{ url_for('tournaments.record_knockout_result_route', tournament_id=tournament.id, match_id=match.id) }}">
-        <label>Vencedor
-          <select name="result">
-            <option value="first_win"{% if match.result and match.result.value == 'first_win' %} selected{% endif %}>{{ team_names.get(match.first_team_id, match.first_team_id) }}</option>
-            <option value="second_win"{% if match.result and match.result.value == 'second_win' %} selected{% endif %}>{{ team_names.get(match.second_team_id, match.second_team_id) }}</option>
+  </nav>
+
+  {# ---------------------------------------------------------- Partidas #}
+  <section id="partidas" class="tab-panel"{% if active_tab == 'partidas' %} data-default{% endif %} aria-labelledby="titulo-partidas">
+    <h2 id="titulo-partidas">Partidas</h2>
+
+    {% if match_total == 0 %}
+      {% if is_round_robin %}
+      <p class="empty">As partidas serão geradas automaticamente quando o torneio for iniciado.</p>
+      {% else %}
+      <p class="empty">Nenhum chaveamento gerado. Defina a ordem inicial na aba <a href="#configuracao">Configuração</a>.</p>
+      {% endif %}
+    {% else %}
+      {% if tournament.status == 'draft' %}
+      <p class="notice">{% if is_round_robin %}Pré-visualização: o calendário definitivo é gerado ao iniciar o torneio.{% else %}Chaveamento em rascunho: os resultados poderão ser registrados após o início.{% endif %}</p>
+      {% endif %}
+
+      <form method="get" action="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}#partidas" class="form match-filters" role="search">
+        <label>{{ 'Rodada' if is_round_robin else 'Fase' }}
+          <select name="round">
+            <option value="">Todas</option>
+            {% for number, label in round_options %}
+            <option value="{{ number }}"{% if match_filter.round_number == number %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
           </select>
         </label>
-        <label>Placar de {{ team_names.get(match.first_team_id, match.first_team_id) }} <input name="first_score" type="number" min="0" value="{{ match.first_score if match.first_score is not none else '' }}"></label>
-        <label>Placar de {{ team_names.get(match.second_team_id, match.second_team_id) }} <input name="second_score" type="number" min="0" value="{{ match.second_score if match.second_score is not none else '' }}"></label>
-        <button class="button" type="submit">Salvar resultado</button>
+        <label>Status
+          <select name="match_status">
+            <option value="">Todos</option>
+            <option value="pending"{% if match_filter.status and match_filter.status.value == 'pending' %} selected{% endif %}>Pendentes</option>
+            <option value="completed"{% if match_filter.status and match_filter.status.value == 'completed' %} selected{% endif %}>Concluídas</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button type="submit">Filtrar</button>
+          {% if is_filtered %}<a class="button button-secondary" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}#partidas">Limpar</a>{% endif %}
+        </div>
       </form>
+
+      {% if started %}
+      <p class="meta progress">{{ match_total - pending_count }} de {{ match_total }} partidas concluídas.</p>
       {% endif %}
-    </article>
-    {% endfor %}
+
+      {% if not rounds %}
+      <p class="empty">Nenhuma partida encontrada com esses filtros.</p>
+      {% endif %}
+
+      {% for round_data in rounds %}
+      <section class="round">
+        <h3>{{ round_data.label }}</h3>
+        {% for name in round_data.bye_names %}
+        <p class="bye">Avançou por bye: {{ name }}</p>
+        {% endfor %}
+        {% for match in round_data.matches %}
+        <article class="match-card match-{{ match.status }}">
+          <div class="match-head">
+            <h4 class="match-teams">{{ match.first_name }} × {{ match.second_name }}</h4>
+            <span class="badge badge-match-{{ match.status }}">{{ match.status_label }}</span>
+          </div>
+          {% if match.outcome %}<p class="match-outcome">{{ match.outcome }}</p>{% endif %}
+          {% if match.schedule_label %}<p class="meta">{{ match.schedule_label }}</p>{% endif %}
+
+          {% if started and match.has_teams %}
+          <details class="match-form"{% if open_match == match.id %} open{% endif %}>
+            <summary>{% if match.status == 'completed' %}Corrigir resultado{% else %}Registrar resultado{% endif %}</summary>
+            {% if is_round_robin %}
+            <form method="post" class="form" action="{{ url_for('tournaments.record_round_robin_result_route', tournament_id=tournament.id, match_id=match.id) }}">
+              <label>Resultado
+                <select name="result" required>
+                  <option value="">Selecione…</option>
+                  <option value="first_win"{{ selected_result(match, 'first_win') }}>Vitória de {{ match.first_name }}</option>
+                  <option value="draw"{{ selected_result(match, 'draw') }}>Empate</option>
+                  <option value="second_win"{{ selected_result(match, 'second_win') }}>Vitória de {{ match.second_name }}</option>
+                </select>
+              </label>
+            {% else %}
+            <form method="post" class="form" action="{{ url_for('tournaments.record_knockout_result_route', tournament_id=tournament.id, match_id=match.id) }}">
+              <label>Vencedor
+                <select name="result" required>
+                  <option value="">Selecione…</option>
+                  <option value="first_win"{{ selected_result(match, 'first_win') }}>{{ match.first_name }}</option>
+                  <option value="second_win"{{ selected_result(match, 'second_win') }}>{{ match.second_name }}</option>
+                </select>
+              </label>
+            {% endif %}
+              <fieldset class="score">
+                <legend>Placar <span class="hint">(opcional — preencha os dois ou nenhum)</span></legend>
+                <div class="form-row">
+                  <label>{{ match.first_name }} <input name="first_score" type="number" min="0" inputmode="numeric" value="{{ field_value(match, 'first_score', match.first_score) }}"></label>
+                  <label>{{ match.second_name }} <input name="second_score" type="number" min="0" inputmode="numeric" value="{{ field_value(match, 'second_score', match.second_score) }}"></label>
+                </div>
+              </fieldset>
+              {% if is_round_robin and tournament.round_robin and tournament.round_robin.statistic_fields %}
+              <fieldset class="score">
+                <legend>Estatísticas <span class="hint">(opcional — campos vazios não contam como zero)</span></legend>
+                {% for field in tournament.round_robin.statistic_fields %}
+                <div class="form-row">
+                  <label>{{ match.first_name }} — {{ field.name }} <input name="first_stat_{{ field.name }}" type="number" inputmode="numeric" value="{{ field_value(match, 'first_stat_' ~ field.name, match.first_team_stats.get(field.name)) }}"></label>
+                  <label>{{ match.second_name }} — {{ field.name }} <input name="second_stat_{{ field.name }}" type="number" inputmode="numeric" value="{{ field_value(match, 'second_stat_' ~ field.name, match.second_team_stats.get(field.name)) }}"></label>
+                </div>
+                {% endfor %}
+              </fieldset>
+              {% endif %}
+              <button type="submit">Salvar resultado</button>
+            </form>
+          </details>
+          <details class="match-form">
+            <summary>Data e local</summary>
+            <form method="post" class="form" action="{{ url_for('tournaments.schedule_match_route', tournament_id=tournament.id, match_id=match.id) }}">
+              <div class="form-row">
+                <label>Data <span class="hint">(opcional)</span> <input name="scheduled_date" type="date" value="{{ field_value(match, 'scheduled_date', match.scheduled_date) }}"></label>
+                <label>Local <span class="hint">(opcional)</span> <input name="location" type="text" value="{{ field_value(match, 'location', match.location) }}" placeholder="Ex.: Ginásio Central"></label>
+              </div>
+              <button type="submit" class="button-secondary">Salvar data e local</button>
+            </form>
+          </details>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </section>
+      {% endfor %}
+    {% endif %}
+
+    {% if tournament.status == 'in_progress' %}
+    <details class="confirm">
+      <summary class="button">Encerrar torneio</summary>
+      <div class="confirm-body">
+        {% if pending_count %}
+        <p>Ainda há {{ pending_count }} partida{{ 's' if pending_count != 1 }} pendente{{ 's' if pending_count != 1 }}. O encerramento só é permitido com todas as partidas concluídas.</p>
+        {% else %}
+        <p>Todas as partidas foram concluídas. Depois de encerrado, o torneio continua aceitando correções de resultados, mas não volta a ficar em andamento.</p>
+        {% endif %}
+        <form method="post" action="{{ url_for('tournaments.finish_round_robin_tournament_route' if is_round_robin else 'tournaments.finish_knockout_tournament_route', tournament_id=tournament.id) }}">
+          <button type="submit">Confirmar encerramento</button>
+        </form>
+      </div>
+    </details>
+    {% endif %}
   </section>
-  {% endfor %}
-  {% if tournament.status == 'in_progress' and knockout_bracket.rounds %}
-    {% set final_matches = knockout_bracket.rounds[-1].matches %}
-    {% if final_matches and final_matches[0].status.value == 'completed' %}
-    <form method="post" action="{{ url_for('tournaments.finish_knockout_tournament_route', tournament_id=tournament.id) }}">
-      <button class="button" type="submit">Encerrar torneio</button>
+
+  {# ------------------------------------------------------ Classificação #}
+  {% if is_round_robin and started %}
+  <section id="classificacao" class="tab-panel"{% if active_tab == 'classificacao' %} data-default{% endif %} aria-labelledby="titulo-classificacao">
+    <h2 id="titulo-classificacao">Classificação</h2>
+    {% if standings and standings.rows %}
+    <div class="table-wrap">
+      <table class="standings">
+        <thead>
+          <tr>
+            <th scope="col">Pos.</th><th scope="col">Equipe</th><th scope="col">J</th><th scope="col">V</th><th scope="col">E</th><th scope="col">D</th><th scope="col"><strong>Pontos</strong></th>
+            {% for field in tournament.round_robin.statistic_fields %}<th scope="col">{{ field.name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in standings.rows %}
+          <tr{% if champion_team_id == row.team.id %} class="champion"{% endif %}>
+            <td>{{ row.position }}</td>
+            <td class="team-cell">{{ row.team.name }}</td>
+            <td>{{ row.played }}</td>
+            <td>{{ row.wins }}</td>
+            <td>{{ row.draws }}</td>
+            <td>{{ row.losses }}</td>
+            <td><strong>{{ row.points }}</strong></td>
+            {% for field in tournament.round_robin.statistic_fields %}<td>{{ row.statistics[field.name] if field.name in row.statistics else '–' }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="meta">J = jogos, V = vitórias, E = empates, D = derrotas. Desempate: {% for criterion in tournament.round_robin.tie_breakers %}{{ criterion.name }} ({{ 'maiores' if criterion.direction.value == 'positive' else 'menores' }}){% if not loop.last %}, {% endif %}{% endfor %}, depois ordem alfabética.</p>
+    {% if standings.alphabetical_fallback_applied %}<p class="notice">A ordem alfabética foi usada como desempate final.</p>{% endif %}
+    {% if not champion_team_id %}<p class="meta">O campeão será destacado quando o torneio for encerrado.</p>{% endif %}
+    {% else %}
+    <p class="empty">Nenhuma equipe na classificação.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------ Equipes #}
+  <section id="equipes" class="tab-panel"{% if active_tab == 'equipes' %} data-default{% endif %} aria-labelledby="titulo-equipes">
+    <h2 id="titulo-equipes">Equipes inscritas: {{ tournament.participant_count }}</h2>
+    {% with can_remove=tournament.status == 'draft' %}
+    {% include 'tournaments/_registered_teams.html' %}
+    {% endwith %}
+    {% if tournament.status == 'draft' %}
+    <div class="registration-actions">
+      <a class="button" href="{{ url_for('registrations.index', tournament_id=tournament.id) }}">Inscrever novas equipes</a>
+    </div>
+    {% else %}
+    <p class="meta">Inscrições encerradas desde o início do torneio.</p>
+    {% endif %}
+  </section>
+
+  {# ------------------------------------------------------ Configuração #}
+  <section id="configuracao" class="tab-panel"{% if active_tab == 'configuracao' %} data-default{% endif %} aria-labelledby="titulo-configuracao">
+    {% if tournament.status == 'draft' and is_round_robin %}
+    <h2 id="titulo-configuracao">Configuração de pontos corridos</h2>
+    {% set config = tournament.round_robin %}
+    <form method="post" class="form" action="{{ url_for('tournaments.configure_round_robin_route', tournament_id=tournament.id) }}">
+      <label>Turnos
+        <select name="mode">
+          <option value="single"{% if config and config.mode.value == 'single' %} selected{% endif %}>Turno único</option>
+          <option value="double"{% if config and config.mode.value == 'double' %} selected{% endif %}>Ida e volta</option>
+        </select>
+      </label>
+      <fieldset class="score">
+        <legend>Pontuação <span class="hint">(vitória &gt; empate &gt; derrota)</span></legend>
+        <div class="form-row form-row-3">
+          <label>Vitória <input name="win_points" type="number" inputmode="numeric" value="{{ config.win_points if config else 3 }}"></label>
+          <label>Empate <input name="draw_points" type="number" inputmode="numeric" value="{{ config.draw_points if config else 1 }}"></label>
+          <label>Derrota <input name="loss_points" type="number" inputmode="numeric" value="{{ config.loss_points if config else 0 }}"></label>
+        </div>
+      </fieldset>
+      <fieldset class="score">
+        <legend>Critérios de desempate <span class="hint">(pelo menos um, aplicados na ordem)</span></legend>
+        {% for slot in range(3) %}
+        {% set criterion = config.tie_breakers[slot] if config and config.tie_breakers | length > slot else none %}
+        <div class="form-row">
+          <label>{{ slot + 1 }}º critério {% if slot %}<span class="hint">(opcional)</span>{% endif %}
+            <input name="tie_breaker_name" value="{{ criterion.name if criterion else '' }}" placeholder="{{ 'Ex.: Gols' if slot == 0 else '' }}">
+          </label>
+          <label>Direção
+            <select name="tie_breaker_direction">
+              <option value="positive">Favorece números maiores</option>
+              <option value="negative"{% if criterion and criterion.direction.value == 'negative' %} selected{% endif %}>Favorece números menores</option>
+            </select>
+          </label>
+        </div>
+        {% endfor %}
+      </fieldset>
+      <label>Campos estatísticos <span class="hint">(opcional, separados por vírgula — use os mesmos nomes dos critérios)</span>
+        <input name="statistic_fields" value="{% if config %}{% for field in config.statistic_fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}" placeholder="Ex.: Gols, Faltas">
+      </label>
+      <button type="submit">Salvar configuração</button>
+    </form>
+    {% if config %}
+    <form method="post" class="inline-form" action="{{ url_for('tournaments.generate_round_robin_calendar_route', tournament_id=tournament.id) }}">
+      <button class="button-secondary" type="submit">Pré-visualizar calendário</button>
+    </form>
+    {% else %}
+    <p class="meta">Salve a configuração para pré-visualizar o calendário e iniciar o torneio.</p>
+    {% endif %}
+
+    {% elif tournament.status == 'draft' %}
+    <h2 id="titulo-configuracao">Configuração do chaveamento</h2>
+    {% if registered | length < 2 %}
+    <p class="empty">Inscreva pelo menos duas equipes para gerar o chaveamento.</p>
+    {% else %}
+    <form method="post" class="form" action="{{ url_for('tournaments.generate_knockout_bracket_route', tournament_id=tournament.id) }}">
+      <label>Ordem inicial
+        <select name="order_mode">
+          <option value="manual"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else 'manual') == 'manual' %} selected{% endif %}>Ordem manual</option>
+          <option value="draw"{% if form.get('order_mode', tournament.knockout.order_mode.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sortear ordem</option>
+        </select>
+      </label>
+      <fieldset class="score">
+        <legend>Posição de cada equipe <span class="hint">(usada na ordem manual; 1 = melhor posicionada)</span></legend>
+        {% for team in registered %}
+        <label class="inline-number">{{ team.name }}
+          <input type="number" min="1" inputmode="numeric" name="team_order_{{ team.id }}" value="{{ form.get('team_order_' ~ team.id, team_positions[team.id]) }}">
+        </label>
+        {% endfor %}
+      </fieldset>
+      <label>Distribuição de byes
+        <select name="bye_strategy">
+          <option value="performance"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else 'performance') == 'performance' %} selected{% endif %}>Prioridade por desempenho (ordem inicial)</option>
+          <option value="manual"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'manual' %} selected{% endif %}>Escolha manual</option>
+          <option value="draw"{% if form.get('bye_strategy', tournament.knockout.bye_strategy.value if tournament.knockout else '') == 'draw' %} selected{% endif %}>Sorteio</option>
+        </select>
+      </label>
+      {% if knockout_bye_count %}
+      <fieldset class="score">
+        <legend>Equipes com bye na escolha manual <span class="hint">({{ knockout_bye_count }} necessária{{ 's' if knockout_bye_count != 1 }})</span></legend>
+        {% for team in registered %}
+        <label class="inline">
+          <input type="checkbox" name="bye_team_ids" value="{{ team.id }}"{% if ('bye_strategy' in form and team.id in form.getlist('bye_team_ids')) or ('bye_strategy' not in form and tournament.knockout and team.id in tournament.knockout.bye_team_ids) %} checked{% endif %}>
+          {{ team.name }}
+        </label>
+        {% endfor %}
+      </fieldset>
+      {% else %}
+      <p class="meta">Com {{ registered | length }} equipes não há byes.</p>
+      {% endif %}
+      <button type="submit">{{ 'Gerar novamente' if tournament.knockout else 'Gerar chaveamento' }}</button>
     </form>
     {% endif %}
-  {% endif %}
-  {% if champion_team_id %}
-  <p><strong>Campeão: {{ team_names.get(champion_team_id, champion_team_id) }}</strong></p>
-  {% endif %}
-</section>
-{% endif %}
-{% if tournament.format_label == 'Pontos corridos' and matches %}
-<section class="card">
-  <h2>Partidas</h2>
-  {% for match in matches %}
-    {% set first_team = namespace(name=match.first_team_id) %}
-    {% set second_team = namespace(name=match.second_team_id) %}
-    {% for team in registered %}
-      {% if team.id == match.first_team_id %}{% set first_team.name = team.name %}{% endif %}
-      {% if team.id == match.second_team_id %}{% set second_team.name = team.name %}{% endif %}
-    {% endfor %}
-    <article>
-      <h3>{{ first_team.name }} × {{ second_team.name }}</h3>
-      <p>Rodada {{ match.round_number }} · {% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
-      {% if tournament.status != 'draft' %}
-      <form method="post" action="{{ url_for('tournaments.record_round_robin_result_route', tournament_id=tournament.id, match_id=match.id) }}">
-        <label>Resultado
-          <select name="result">
-            <option value="first_win"{% if match.result and match.result.value == 'first_win' %} selected{% endif %}>Vitória de {{ first_team.name }}</option>
-            <option value="draw"{% if match.result and match.result.value == 'draw' %} selected{% endif %}>Empate</option>
-            <option value="second_win"{% if match.result and match.result.value == 'second_win' %} selected{% endif %}>Vitória de {{ second_team.name }}</option>
-          </select>
-        </label>
-        <label>Placar de {{ first_team.name }} <input name="first_score" type="number" min="0" value="{{ match.first_score if match.first_score is not none else '' }}"></label>
-        <label>Placar de {{ second_team.name }} <input name="second_score" type="number" min="0" value="{{ match.second_score if match.second_score is not none else '' }}"></label>
-        {% if tournament.round_robin %}
-          {% for field in tournament.round_robin.statistic_fields %}
-            <label>{{ first_team.name }} — {{ field.name }} <input name="first_stat_{{ field.name }}" type="number" value="{{ match.first_team_stats[field.name] if match.first_team_stats and field.name in match.first_team_stats else '' }}"></label>
-            <label>{{ second_team.name }} — {{ field.name }} <input name="second_stat_{{ field.name }}" type="number" value="{{ match.second_team_stats[field.name] if match.second_team_stats and field.name in match.second_team_stats else '' }}"></label>
-          {% endfor %}
-        {% endif %}
-        <button class="button" type="submit">Salvar resultado</button>
-      </form>
+
+    {% else %}
+    <h2 id="titulo-configuracao">Regras do torneio</h2>
+    <p class="meta">As regras ficam bloqueadas após o início; apenas resultados podem ser corrigidos.</p>
+    <dl class="details">
+      <dt>Formato</dt><dd>{{ tournament.format_label }}</dd>
+      {% if tournament.round_robin %}
+      <dt>Turnos</dt><dd>{{ 'Ida e volta' if tournament.round_robin.mode.value == 'double' else 'Turno único' }}</dd>
+      <dt>Pontuação</dt><dd>Vitória {{ tournament.round_robin.win_points }} · Empate {{ tournament.round_robin.draw_points }} · Derrota {{ tournament.round_robin.loss_points }}</dd>
+      <dt>Desempate</dt><dd>{% for criterion in tournament.round_robin.tie_breakers %}{{ criterion.name }} ({{ 'maiores' if criterion.direction.value == 'positive' else 'menores' }}){% if not loop.last %}, {% endif %}{% endfor %}</dd>
+      <dt>Estatísticas</dt><dd>{% for field in tournament.round_robin.statistic_fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% else %}Nenhuma{% endfor %}</dd>
       {% endif %}
-    </article>
-  {% endfor %}
-</section>
-{% endif %}
-{% if standings and tournament.status != 'draft' %}
-<section class="card">
-  <h2>Classificação</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Posição</th><th>Equipe</th><th>Jogos</th><th>Vitórias</th><th>Empates</th><th>Derrotas</th><th><strong>Pontos</strong></th>
-        {% if tournament.round_robin %}
-          {% for field in tournament.round_robin.statistic_fields %}<th>{{ field.name }}</th>{% endfor %}
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in standings.rows %}
-      <tr{% if champion_team_id == row.team.id %} class="champion"{% endif %}>
-        <td>{{ row.position }}</td>
-        <td>{{ row.team.name }}</td>
-        <td>{{ row.played }}</td>
-        <td>{{ row.wins }}</td>
-        <td>{{ row.draws }}</td>
-        <td>{{ row.losses }}</td>
-        <td><strong>{{ row.points }}</strong></td>
-        {% if tournament.round_robin %}
-          {% for field in tournament.round_robin.statistic_fields %}<td>{{ row.statistics[field.name] if field.name in row.statistics else '' }}</td>{% endfor %}
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if tournament.status == 'in_progress' %}
-  <form method="post" action="{{ url_for('tournaments.finish_round_robin_tournament_route', tournament_id=tournament.id) }}">
-    <button class="button" type="submit">Encerrar torneio</button>
-  </form>
-  {% endif %}
-  {% if champion_team_id %}<p><strong>Campeão: {{ standings.rows[0].team.name }}</strong></p>{% endif %}
-  {% if standings.alphabetical_fallback_applied %}<p>A ordem alfabética foi usada como desempate final.</p>{% endif %}
-</section>
-{% endif %}
-<section class="card">
-  <h2>Equipes inscritas: {{ tournament.participant_count }}</h2>
-  {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
-  {% with can_remove=tournament.status == 'draft' %}
-  {% include 'tournaments/_registered_teams.html' %}
-  {% endwith %}
-  {% if tournament.status == 'draft' %}
-  <div class="registration-actions">
-    <a class="button" href="{{ url_for('registrations.index', tournament_id=tournament.id) }}">Inscrever novas equipes</a>
-  </div>
-  {% endif %}
-</section>
-<p><a class="button button-secondary" href="{{ url_for('tournaments.index') }}">Voltar aos torneios</a></p>
+      {% if tournament.knockout %}
+      <dt>Ordem inicial</dt><dd>{{ 'Sorteada' if tournament.knockout.order_mode.value == 'draw' else 'Manual' }}</dd>
+      <dt>Byes</dt><dd>{{ {'performance': 'Prioridade por desempenho', 'manual': 'Escolha manual', 'draw': 'Sorteio'}[tournament.knockout.bye_strategy.value] }}</dd>
+      {% endif %}
+    </dl>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}
