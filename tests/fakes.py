@@ -2,8 +2,13 @@
 
 from datetime import datetime, timedelta
 
+from server.core.entities.match import Match
 from server.core.entities.team import Team
 from server.core.entities.tournament import Tournament
+from server.core.interfaces.match_repository import MatchRepository
+from server.core.interfaces.registration_repository import (
+    RegistrationRepository,
+)
 from server.core.interfaces.team_participation_query import (
     TeamParticipationQuery,
 )
@@ -88,6 +93,57 @@ class InMemoryTeamRepository(TeamRepository):
 
     def list_all(self) -> list[Team]:
         return list(self._teams.values())
+
+
+class InMemoryMatchRepository(MatchRepository):
+    """Fake match repository keyed by match id."""
+
+    def __init__(self) -> None:
+        self._matches: dict[str, Match] = {}
+
+    def replace_for_tournament(
+        self, tournament_id: str, matches: list[Match],
+    ) -> None:
+        self._matches = {
+            match_id: match
+            for match_id, match in self._matches.items()
+            if match.tournament_id != tournament_id
+        }
+        for match in matches:
+            self._matches[match.id] = match
+
+    def get(self, match_id: str) -> Match | None:
+        return self._matches.get(match_id)
+
+    def list_for_tournament(self, tournament_id: str) -> list[Match]:
+        return [
+            match for match in self._matches.values()
+            if match.tournament_id == tournament_id
+        ]
+
+    def update(self, match: Match) -> None:
+        self._matches[match.id] = match
+
+
+class InMemoryRegistrationRepository(RegistrationRepository):
+    """Fake registration repository that stores new teams in a team fake."""
+
+    def __init__(self, teams: TeamRepository) -> None:
+        self._teams = teams
+        self._team_ids: dict[str, set[str]] = {}
+
+    def team_ids(self, tournament_id: str) -> set[str]:
+        return set(self._team_ids.get(tournament_id, set()))
+
+    def add(self, tournament_id: str, team_id: str) -> None:
+        self._team_ids.setdefault(tournament_id, set()).add(team_id)
+
+    def add_new_team(self, tournament_id: str, team: Team) -> None:
+        self._teams.add(team)
+        self.add(tournament_id, team.id)
+
+    def remove(self, tournament_id: str, team_id: str) -> None:
+        self._team_ids.get(tournament_id, set()).discard(team_id)
 
 
 class FakeTeamParticipationQuery(TeamParticipationQuery):

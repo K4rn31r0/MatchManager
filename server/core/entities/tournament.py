@@ -199,16 +199,27 @@ class Tournament:
             )
         return replace(self, knockout=config, updated_at=updated_at)
 
-    def start_knockout(self, started_at: datetime) -> "Tournament":
+    def start(self, started_at: datetime) -> "Tournament":
+        """Move a configured draft tournament to the in-progress status.
+
+        Starting closes registrations and locks the configuration: every
+        configuration operation requires the draft status.
+        """
         if self.status is not TournamentStatus.DRAFT:
             raise InvalidTournamentError(
                 "Só é possível iniciar torneios em rascunho."
             )
-        if self.tournament_format is not TournamentFormat.KNOCKOUT:
+        if (
+            self.tournament_format is TournamentFormat.ROUND_ROBIN
+            and self.round_robin is None
+        ):
             raise InvalidTournamentError(
-                "O início solicitado não corresponde ao formato do torneio."
+                "Configure os pontos corridos antes de iniciar o torneio."
             )
-        if self.knockout is None:
+        if (
+            self.tournament_format is TournamentFormat.KNOCKOUT
+            and self.knockout is None
+        ):
             raise InvalidTournamentError(
                 "Gere um chaveamento válido antes de iniciar o torneio."
             )
@@ -217,6 +228,27 @@ class Tournament:
             status=TournamentStatus.IN_PROGRESS,
             updated_at=started_at,
         )
+
+    def start_knockout(self, started_at: datetime) -> "Tournament":
+        if (
+            self.status is TournamentStatus.DRAFT
+            and self.tournament_format is not TournamentFormat.KNOCKOUT
+        ):
+            raise InvalidTournamentError(
+                "O início solicitado não corresponde ao formato do torneio."
+            )
+        return self.start(started_at)
+
+    def ensure_accepts_results(self) -> None:
+        """Results may be recorded or corrected once the tournament started.
+
+        Corrections remain allowed after the tournament is finished and do
+        not change its status.
+        """
+        if self.status is TournamentStatus.DRAFT:
+            raise InvalidTournamentError(
+                "Só é possível registrar resultados em torneios iniciados."
+            )
 
     def has_equivalent_name(self, name: str) -> bool:
         """Tell whether a name clashes with this tournament's name.

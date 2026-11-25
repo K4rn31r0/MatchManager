@@ -2,13 +2,9 @@
 
 from dataclasses import dataclass, replace
 
-from server.core.entities.knockout_bracket import bracket_size, knockout_round_count
+from server.core.entities.knockout_bracket import knockout_round_count
 from server.core.entities.match import Match, MatchResult, MatchStatus
-from server.core.entities.tournament import (
-    Tournament,
-    TournamentFormat,
-    TournamentStatus,
-)
+from server.core.entities.tournament import Tournament, TournamentFormat
 from server.core.errors import InvalidTournamentError
 from server.core.interfaces.match_repository import MatchRepository
 from server.core.interfaces.tournament_repository import TournamentRepository
@@ -42,10 +38,7 @@ class RecordKnockoutResult:
             raise InvalidTournamentError(
                 "Esta operação só pode ser usada em mata-mata."
             )
-        if tournament.status is not TournamentStatus.IN_PROGRESS:
-            raise InvalidTournamentError(
-                "Só é possível registrar resultados em torneios iniciados."
-            )
+        tournament.ensure_accepts_results()
         match = self._matches.get(match_id)
         if match is None or match.tournament_id != tournament_id:
             raise InvalidTournamentError("Partida não encontrada.")
@@ -54,10 +47,14 @@ class RecordKnockoutResult:
                 "Informe o vencedor da partida."
             )
         tournament_matches = self._matches.list_for_tournament(tournament_id)
-        if any(
-            item.round_number > match.round_number
-            and item.status is MatchStatus.COMPLETED
-            for item in tournament_matches
+        next_match = self._find_next_match(
+            tournament,
+            match,
+            tournament_matches,
+        )
+        if (
+            next_match is not None
+            and next_match.status is MatchStatus.COMPLETED
         ):
             raise InvalidTournamentError(
                 "Não é possível corrigir o resultado após uma "
@@ -79,11 +76,6 @@ class RecordKnockoutResult:
             else:
                 message = "O placar não corresponde ao resultado informado."
             raise InvalidTournamentError(message) from None
-        next_match = self._find_next_match(
-            tournament,
-            match,
-            tournament_matches,
-        )
         if next_match is not None:
             winner_id = (
                 match.first_team_id
@@ -148,9 +140,4 @@ class RecordKnockoutResult:
         winner_field = (
             "first_team_id" if match.bracket_position % 2 else "second_team_id"
         )
-        if next_match.status is MatchStatus.COMPLETED:
-            raise InvalidTournamentError(
-                "Não é possível alterar o resultado após uma "
-                "partida subsequente."
-            )
         return replace(next_match, **{winner_field: winner_id})

@@ -66,6 +66,7 @@ from server.core.use_cases.record_knockout_result import (
 from server.core.use_cases.finish_knockout_tournament import (
     FinishKnockoutTournament,
 )
+from server.core.use_cases.start_tournament import StartTournament
 
 
 class InvalidFormError(Exception):
@@ -94,6 +95,7 @@ def create_tournament_blueprint(
     start_knockout_tournament: StartKnockoutTournament,
     record_knockout_result: RecordKnockoutResult,
     finish_knockout_tournament: FinishKnockoutTournament,
+    start_tournament: StartTournament,
 ) -> Blueprint:
     """Build the tournament routes around the injected use cases."""
     blueprint = Blueprint("tournaments", __name__)
@@ -316,6 +318,34 @@ def create_tournament_blueprint(
                 )
             )
             return render_detail(tournament_id, message, request.form), 400
+        return redirect(url_for(".detail", tournament_id=tournament_id))
+
+    def render_start(tournament_id: str, error: str | None = None) -> str:
+        teams = registrations.list(tournament_id)
+        return render_template(
+            "tournaments/start.html",
+            tournament=present_tournament(
+                teams.tournament, len(teams.registered),
+            ),
+            registered=present_teams(teams.registered),
+            error=error,
+        )
+
+    @blueprint.get("/tournaments/<tournament_id>/start")
+    def confirm_start(tournament_id: str):
+        tournament = get_tournament.execute(tournament_id)
+        if tournament.status is not TournamentStatus.DRAFT:
+            return redirect(url_for(".detail", tournament_id=tournament_id))
+        return render_start(tournament_id)
+
+    @blueprint.post("/tournaments/<tournament_id>/start")
+    def start(tournament_id: str):
+        try:
+            start_tournament.execute(tournament_id)
+        except TournamentNotFoundError:
+            raise
+        except DomainError as error:
+            return render_start(tournament_id, error.message), 400
         return redirect(url_for(".detail", tournament_id=tournament_id))
 
     @blueprint.post("/tournaments/<tournament_id>/knockout/start")

@@ -58,8 +58,11 @@
     <button class="button" type="submit">Salvar configuração</button>
   </form>
   <form method="post" action="{{ url_for('tournaments.generate_round_robin_calendar_route', tournament_id=tournament.id) }}">
-    <button class="button button-secondary" type="submit">Gerar calendário</button>
+    <button class="button button-secondary" type="submit">Pré-visualizar calendário</button>
   </form>
+  {% if tournament.round_robin %}
+  <p><a class="button" href="{{ url_for('tournaments.confirm_start', tournament_id=tournament.id) }}">Iniciar torneio</a></p>
+  {% endif %}
 </section>
 {% endif %}
 {% if tournament.status == 'draft' and tournament.format_label == 'Mata-mata' %}
@@ -99,9 +102,7 @@
     <button class="button" type="submit">Gerar chaveamento</button>
   </form>
   {% if knockout_bracket %}
-  <form method="post" action="{{ url_for('tournaments.start_knockout_tournament_route', tournament_id=tournament.id) }}">
-    <button class="button button-secondary" type="submit">Iniciar torneio</button>
-  </form>
+  <p><a class="button" href="{{ url_for('tournaments.confirm_start', tournament_id=tournament.id) }}">Iniciar torneio</a></p>
   {% endif %}
 </section>
 {% endif %}
@@ -120,7 +121,7 @@
       <p>{{ team_names.get(match.first_team_id, 'A definir') if match.first_team_id else 'A definir' }}
         × {{ team_names.get(match.second_team_id, 'A definir') if match.second_team_id else 'A definir' }}</p>
       <p>{% if match.status.value == 'completed' %}Concluída{% else %}Pendente{% endif %}</p>
-      {% if tournament.status == 'in_progress' and match.first_team_id and match.second_team_id %}
+      {% if tournament.status != 'draft' and match.first_team_id and match.second_team_id %}
       <form method="post" action="{{ url_for('tournaments.record_knockout_result_route', tournament_id=tournament.id, match_id=match.id) }}">
         <label>Vencedor
           <select name="result">

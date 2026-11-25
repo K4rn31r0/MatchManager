@@ -139,3 +139,17 @@ Após a revisão obrigatória, corrigi o encerramento para rejeitar também part
 > Implement all acceptance criteria and directly related docs. Update issue 08 only after every criterion is implemented and verified: mark all criteria `[x]`, set Status `done`, and append a factual comment if useful. Append sequential entry 009 to `docs/agents/prompt-history.md`, including the exact user request that generated this issue work and a concise summary (preserve existing file contents). Run focused tests during each TDD slice and relevant type/lint checking if established; do NOT run the full suite (the coordinator will run it once after this issue). After full issue validation, make one commit on the current branch with exactly the subject `08: Mata-mata: resultados e avanços (issue 08)` and required Copilot co-author trailer. Do not touch any other issue. Before committing, inspect the diff and ensure no unrelated changes are included. Return commit hash, test commands/results, changes, and caveats. If you cannot complete the issue fully, stop before committing and report the blocker; do not mark done.
 
 **O que foi feito:** Implementei casos de uso independentes de Flask para registrar resultados do mata-mata, exigir um vencedor, validar placar opcional sem empate e avançar ou corrigir a equipe na posição correspondente da partida seguinte; uma correção é recusada se uma partida posterior já foi concluída. A interface apresenta os formulários de resultado, a evolução até a final e o campeão somente após o encerramento válido do torneio. A issue 08 foi marcada como concluída após 42 testes focados e regressões relacionadas passarem, além do pycodestyle com as exclusões E501/W503 já adotadas no repositório. A suíte completa não foi executada, conforme solicitado.
+
+## 010 — Implementação da issue 09: Ciclo, correções e encerramento
+
+**Data:** 2026-11-25
+**Ferramenta:** Claude Code (Claude Opus 5.5)
+**Branch:** `issues-09-e-10-ciclo-e-mobile`
+
+**Prompt:**
+
+> Sim, vamos ter que fazer as issues 9 e 10, depois dar push e commit e e testar se a aplicação está funcionando. Pode ir.
+>
+> Vamos focar na 9 antes da 10
+
+**O que foi feito:** Criado o caso de uso `StartTournament`, que inicia qualquer torneio delegando a uma estratégia por formato (Strategy/OCP): `StartRoundRobinTournament` (novo, pois pontos corridos não tinham início) valida rascunho, configuração e pelo menos duas equipes, gera o calendário completo e muda o status para em andamento; o mata-mata reutiliza `StartKnockoutTournament`. A entidade `Tournament` ganhou `start()` e `ensure_accepts_results()`, usado pelos dois casos de uso de resultado, permitindo correções em torneios em andamento ou encerrados sem mudar o status. No mata-mata, o bloqueio de correção passou a considerar apenas a partida subsequente que depende do resultado, o que permite corrigir a final de um torneio encerrado. A interface ganhou a página de confirmação de início com formato, regras e participantes. Testes novos cobrem início, bloqueios de configuração e inscrição, correções, recálculo da classificação e encerramento com fakes, além do fluxo web; a suíte completa passou (196 testes).
