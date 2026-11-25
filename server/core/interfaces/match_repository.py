@@ -21,3 +21,6 @@ class MatchRepository(Protocol):
 
     def update(self, match: Match) -> None:
         """Replace an existing match."""
+
+    def delete_for_tournament(self, tournament_id: str) -> None:
+        """Remove every match of the tournament."""

@@ -51,17 +51,11 @@ class JsonTournamentRepository(TournamentRepository):
 
     def delete(self, tournament_id: str) -> None:
         document = self._storage.read()
-        for collection, key in (
-            (_COLLECTION, "id"),
-            ("registrations", "tournament_id"),
-            ("matches", "tournament_id"),
-        ):
-            if collection in document:
-                document[collection] = [
-                    record
-                    for record in document[collection]
-                    if record[key] != tournament_id
-                ]
+        document[_COLLECTION] = [
+            record
+            for record in document.get(_COLLECTION, [])
+            if record["id"] != tournament_id
+        ]
         self._storage.write(document)
 
     def participant_counts(self) -> dict[str, int]:

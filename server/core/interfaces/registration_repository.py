@@ -17,3 +17,9 @@ class RegistrationRepository(Protocol):
 
     def remove(self, tournament_id: str, team_id: str) -> None:
         """Remove the registration while keeping the team."""
+
+    def remove_all_for_tournament(self, tournament_id: str) -> None:
+        """Remove every registration of the tournament."""
+
+    def remove_all_for_team(self, team_id: str) -> None:
+        """Remove every registration of the team, in all tournaments."""

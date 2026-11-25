@@ -27,6 +27,17 @@ def knockout_round_count(team_count: int) -> int:
     return bracket_size(team_count).bit_length() - 1
 
 
+def required_bye_count(team_count: int) -> int:
+    """Return how many byes complete the bracket to a power of two.
+
+    Five teams need three byes (bracket of eight). With fewer than two
+    teams there is no bracket, so no byes are needed.
+    """
+    if team_count < 2:
+        return 0
+    return bracket_size(team_count) - team_count
+
+
 def build_knockout_bracket(
     tournament_id: str,
     initial_order: list[str],

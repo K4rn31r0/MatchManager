@@ -16,7 +16,13 @@ from server.core.use_cases.delete_tournament import DeleteTournament
 from server.core.use_cases.get_tournament import GetTournament
 from server.core.use_cases.list_tournaments import ListTournaments
 from server.core.use_cases.update_tournament import UpdateTournament
-from tests.fakes import FakeClock, SequentialIdGenerator
+from server.core.entities.match import Match
+from tests.fakes import (
+    FakeClock,
+    InMemoryMatchRepository,
+    InMemoryRegistrationRepository,
+    SequentialIdGenerator,
+)
 
 
 def data(name):
@@ -96,15 +102,72 @@ def test_list_combines_search_and_status(
 
 @pytest.mark.parametrize("status", list(TournamentStatus))
 def test_delete_requires_confirmation_in_every_status(
-    tournament_repository, seeded, status
+    tournament_repository, team_repository, seeded, status
 ):
     copa, _, _ = seeded
     target = replace(copa, status=status)
     tournament_repository.update(target)
-    delete = DeleteTournament(tournament_repository)
+    delete = DeleteTournament(
+        tournament_repository,
+        InMemoryRegistrationRepository(team_repository),
+        InMemoryMatchRepository(),
+    )
     with pytest.raises(InvalidTournamentError):
         delete.execute(copa.id, confirmed=False)
     assert GetTournament(tournament_repository).execute(copa.id) == target
     delete.execute(copa.id, confirmed=True)
     with pytest.raises(TournamentNotFoundError):
         GetTournament(tournament_repository).execute(copa.id)
+
+
+def _match(match_id: str, tournament_id: str) -> Match:
+    return Match(
+        id=match_id,
+        tournament_id=tournament_id,
+        round_number=1,
+        first_team_id="a",
+        second_team_id="b",
+    )
+
+
+def test_delete_removes_registrations_and_matches_of_that_tournament_only(
+    tournament_repository, team_repository, seeded
+):
+    copa, liga, _ = seeded
+    registrations = InMemoryRegistrationRepository(team_repository)
+    matches = InMemoryMatchRepository()
+    for tournament in (copa, liga):
+        registrations.add(tournament.id, "a")
+        registrations.add(tournament.id, "b")
+        matches.replace_for_tournament(
+            tournament.id, [_match(f"{tournament.id}-1", tournament.id)]
+        )
+
+    DeleteTournament(tournament_repository, registrations, matches).execute(
+        copa.id, confirmed=True
+    )
+
+    assert registrations.team_ids(copa.id) == set()
+    assert matches.list_for_tournament(copa.id) == []
+    assert registrations.team_ids(liga.id) == {"a", "b"}
+    assert matches.list_for_tournament(liga.id) == [
+        _match(f"{liga.id}-1", liga.id)
+    ]
+
+
+def test_unconfirmed_delete_keeps_registrations_and_matches(
+    tournament_repository, team_repository, seeded
+):
+    copa, _, _ = seeded
+    registrations = InMemoryRegistrationRepository(team_repository)
+    matches = InMemoryMatchRepository()
+    registrations.add(copa.id, "a")
+    matches.replace_for_tournament(copa.id, [_match("m1", copa.id)])
+
+    with pytest.raises(InvalidTournamentError):
+        DeleteTournament(
+            tournament_repository, registrations, matches
+        ).execute(copa.id, confirmed=False)
+
+    assert registrations.team_ids(copa.id) == {"a"}
+    assert matches.list_for_tournament(copa.id) == [_match("m1", copa.id)]

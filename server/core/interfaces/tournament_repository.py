@@ -26,7 +26,11 @@ class TournamentRepository(ABC):
 
     @abstractmethod
     def delete(self, tournament_id: str) -> None:
-        """Remove a tournament and its registrations and matches."""
+        """Remove only the tournament record.
+
+        Removing its registrations and matches is decided by the
+        DeleteTournament use case.
+        """
 
     @abstractmethod
     def participant_counts(self) -> dict[str, int]:

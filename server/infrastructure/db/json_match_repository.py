@@ -52,6 +52,9 @@ class JsonMatchRepository:
         ]
         self._storage.write(document)
 
+    def delete_for_tournament(self, tournament_id: str) -> None:
+        self.replace_for_tournament(tournament_id, [])
+
 
 def _to_record(match: Match) -> dict[str, Any]:
     record = {

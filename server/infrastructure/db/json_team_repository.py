@@ -41,12 +41,6 @@ class JsonTeamRepository(TeamRepository):
             for record in self._records(document)
             if record["id"] != team_id
         ]
-        if "registrations" in document:
-            document["registrations"] = [
-                record
-                for record in document["registrations"]
-                if record["team_id"] != team_id
-            ]
         self._storage.write(document)
 
     def list_all(self) -> list[Team]:

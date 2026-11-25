@@ -22,7 +22,10 @@ class TeamRepository(ABC):
 
     @abstractmethod
     def delete(self, team_id: str) -> None:
-        """Remove the team with the given id."""
+        """Remove only the team record.
+
+        Removing its registrations is decided by the DeleteTeam use case.
+        """
 
     @abstractmethod
     def list_all(self) -> list[Team]:

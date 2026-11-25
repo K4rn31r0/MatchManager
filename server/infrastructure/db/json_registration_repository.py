@@ -45,6 +45,21 @@ class JsonRegistrationRepository(TeamParticipationQuery):
         ]
         self._storage.write(document)
 
+    def remove_all_for_tournament(self, tournament_id: str) -> None:
+        self._remove_where("tournament_id", tournament_id)
+
+    def remove_all_for_team(self, team_id: str) -> None:
+        self._remove_where("team_id", team_id)
+
+    def _remove_where(self, field: str, value: str) -> None:
+        document = self._storage.read()
+        document["registrations"] = [
+            record
+            for record in document.get("registrations", [])
+            if record[field] != value
+        ]
+        self._storage.write(document)
+
     def is_in_started_tournament(self, team_id: str) -> bool:
         document = self._storage.read()
         started = {

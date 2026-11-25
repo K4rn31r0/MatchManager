@@ -9,8 +9,8 @@ from uuid import uuid4
 from server.core.entities.knockout_bracket import (
     KnockoutBracket,
     KnockoutRound,
-    bracket_size,
     build_knockout_bracket,
+    required_bye_count,
 )
 from server.core.entities.tournament import (
     KnockoutByeStrategy,
@@ -75,7 +75,7 @@ class GenerateKnockoutBracket:
             data.order_mode,
             data.initial_order,
         )
-        bye_count = bracket_size(len(initial_order)) - len(initial_order)
+        bye_count = required_bye_count(len(initial_order))
         bye_ids = self._resolve_byes(initial_order, bye_count, data)
         bracket = build_knockout_bracket(
             tournament_id,

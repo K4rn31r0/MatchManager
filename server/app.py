@@ -139,7 +139,11 @@ def create_app(data_file: Path | None = None) -> Flask:
             update_tournament=UpdateTournament(
                 tournament_repository, datetime.now
             ),
-            delete_tournament=DeleteTournament(tournament_repository),
+            delete_tournament=DeleteTournament(
+                tournament_repository,
+                registration_repository,
+                match_repository,
+            ),
             configure_round_robin=ConfigureRoundRobin(tournament_repository),
             generate_round_robin_calendar=generate_round_robin_calendar,
             record_round_robin_result=RecordRoundRobinResult(
@@ -195,6 +199,7 @@ def create_app(data_file: Path | None = None) -> Flask:
             delete_team=DeleteTeam(
                 repository=team_repository,
                 participation=registration_repository,
+                registrations=registration_repository,
             ),
         )
     )

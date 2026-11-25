@@ -13,6 +13,7 @@ from server.api.presenters.tournament_presenter import (
     present_tournament,
     present_tournaments,
 )
+from server.core.entities.knockout_bracket import required_bye_count
 from server.core.entities.team import Team
 from server.core.entities.tournament import (
     KnockoutByeStrategy,
@@ -197,10 +198,7 @@ def create_tournament_blueprint(
                 round_count = len(knockout_bracket.rounds)
             if tournament.knockout is not None and match_filter.status is None:
                 first_round_byes = tournament.knockout.bye_team_ids
-            participant_count = len(teams.registered)
-            if participant_count >= 2:
-                bracket_size = 1 << (participant_count - 1).bit_length()
-                knockout_bye_count = bracket_size - participant_count
+            knockout_bye_count = required_bye_count(len(teams.registered))
         registered_ids = [team.id for team in teams.registered]
         knockout_config = teams.tournament.knockout
         team_order = registered_ids

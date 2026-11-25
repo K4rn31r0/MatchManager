@@ -191,3 +191,17 @@ Após a revisão obrigatória, corrigi o encerramento para rejeitar também part
 > (Pedido do grupo para corrigir as violações de PEP 8, usando Ruff ou Black.)
 
 **O que foi feito:** Foi adicionado o `ruff.toml`, com limite de 79 caracteres por linha (o padrão do Ruff e do Black é 88, acima do que a PEP 8 permite) e as regras `E`/`W` do pycodestyle. O `ruff format` reformatou 46 arquivos e resolveu 70 das 78 violações. As restantes foram corrigidas à mão: mensagens longas quebradas por concatenação implícita, sem mudar o texto exibido ao usuário; um nome de teste e uma docstring encurtados; e duas fatias reescritas sem `:` (`str.removeprefix` e indexação direta), com comportamento idêntico, porque o pycodestyle (E203) e o formatador discordam sobre o espaço antes do `:`. Resultado: zero violações no `pycodestyle`, `ruff check` e `ruff format --check`, 220 testes passando e o fluxo completo dos dois formatos verificado pelo app sem falhas. O README ganhou a seção "Estilo de código (PEP 8)". Os arquivos Markdown foram excluídos do Ruff, porque o formatador alterava os exemplos de código do `AGENTS.md`.
+
+## 014 — Regras de negócio retiradas do controller e da infraestrutura
+
+**Data:** 2026-11-25
+**Ferramenta:** Claude Code (Claude Opus 5.5)
+**Branch:** `clean-arch-byes-exclusao`
+
+**Prompt:**
+
+> faz o 6 e o 8?
+
+(Item 6: tirar do controller o cálculo da quantidade de byes. Item 8: tirar dos repositórios JSON a exclusão em cascata.)
+
+**O que foi feito:** Foram corrigidas duas violações de Clean Architecture apontadas na revisão. (6) O controller de torneios recalculava a quantidade de byes do mata-mata, duplicando uma regra que já existia no core. Foi criada a função de domínio `required_bye_count` em `knockout_bracket.py`, testada em `tests/entities/test_knockout_bracket.py`, e ela passou a ser usada tanto pelo `GenerateKnockoutBracket` quanto pelo controller. (8) A regra "excluir um torneio remove suas inscrições e partidas" e a regra "excluir uma equipe remove suas inscrições" estavam dentro de `JsonTournamentRepository.delete` e `JsonTeamRepository.delete`. Agora cada repositório remove apenas a própria coleção, e a decisão fica nos use cases `DeleteTournament` e `DeleteTeam`, que usam os novos métodos `RegistrationRepository.remove_all_for_tournament`, `RegistrationRepository.remove_all_for_team` e `MatchRepository.delete_for_tournament`. Novos testes de use case (com fakes) e de infraestrutura cobrem a nova divisão de responsabilidades. Os testes de API que verificam a exclusão de ponta a ponta continuaram passando sem alteração, o que confirma que o comportamento para o usuário não mudou. Resultado: 237 testes passando, PEP 8 sem violações e o fluxo completo dos dois formatos verificado pelo app.

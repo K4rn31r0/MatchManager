@@ -127,6 +127,9 @@ class InMemoryMatchRepository(MatchRepository):
     def update(self, match: Match) -> None:
         self._matches[match.id] = match
 
+    def delete_for_tournament(self, tournament_id: str) -> None:
+        self.replace_for_tournament(tournament_id, [])
+
 
 class InMemoryRegistrationRepository(RegistrationRepository):
     """Fake registration repository that stores new teams in a team fake."""
@@ -147,6 +150,13 @@ class InMemoryRegistrationRepository(RegistrationRepository):
 
     def remove(self, tournament_id: str, team_id: str) -> None:
         self._team_ids.get(tournament_id, set()).discard(team_id)
+
+    def remove_all_for_tournament(self, tournament_id: str) -> None:
+        self._team_ids.pop(tournament_id, None)
+
+    def remove_all_for_team(self, team_id: str) -> None:
+        for team_ids in self._team_ids.values():
+            team_ids.discard(team_id)
 
 
 class FakeTeamParticipationQuery(TeamParticipationQuery):
