@@ -5,6 +5,7 @@ from datetime import date
 from flask import Blueprint, redirect, render_template, request, url_for
 from werkzeug.datastructures import MultiDict
 
+from server.api.presenters.match_presenter import present_rounds, round_label
 from server.api.presenters.team_presenter import present_teams
 from server.api.presenters.tournament_presenter import (
     FORMAT_LABELS,
@@ -20,7 +21,7 @@ from server.core.entities.tournament import (
     TournamentFormat,
     TournamentStatus,
 )
-from server.core.entities.match import MatchResult
+from server.core.entities.match import MatchResult, MatchStatus
 from server.core.errors import DomainError, TournamentNotFoundError
 from server.core.use_cases.create_tournament import (
     CreateTournament,
@@ -48,8 +49,13 @@ from server.core.use_cases.calculate_round_robin_standings import (
 from server.core.use_cases.finish_round_robin_tournament import (
     FinishRoundRobinTournament,
 )
-from server.core.use_cases.list_round_robin_matches import (
-    ListRoundRobinMatches,
+from server.core.use_cases.list_tournament_matches import (
+    ListTournamentMatches,
+    MatchFilter,
+)
+from server.core.use_cases.schedule_match import (
+    MatchScheduleInput,
+    ScheduleMatch,
 )
 from server.core.use_cases.generate_knockout_bracket import (
     GenerateKnockoutBracket,
@@ -66,6 +72,7 @@ from server.core.use_cases.record_knockout_result import (
 from server.core.use_cases.finish_knockout_tournament import (
     FinishKnockoutTournament,
 )
+from server.core.use_cases.start_tournament import StartTournament
 
 
 class InvalidFormError(Exception):
@@ -88,12 +95,14 @@ def create_tournament_blueprint(
     record_round_robin_result: RecordRoundRobinResult,
     calculate_round_robin_standings: CalculateRoundRobinStandings,
     finish_round_robin_tournament: FinishRoundRobinTournament,
-    list_round_robin_matches: ListRoundRobinMatches,
+    list_tournament_matches: ListTournamentMatches,
+    schedule_match: ScheduleMatch,
     generate_knockout_bracket: GenerateKnockoutBracket,
     get_knockout_bracket: GetKnockoutBracket,
     start_knockout_tournament: StartKnockoutTournament,
     record_knockout_result: RecordKnockoutResult,
     finish_knockout_tournament: FinishKnockoutTournament,
+    start_tournament: StartTournament,
 ) -> Blueprint:
     """Build the tournament routes around the injected use cases."""
     blueprint = Blueprint("tournaments", __name__)
@@ -150,25 +159,42 @@ def create_tournament_blueprint(
         tournament_id: str,
         error: str | None = None,
         form: MultiDict[str, str] | None = None,
+        tab: str | None = None,
+        open_match: str | None = None,
     ) -> str:
         teams = registrations.list(tournament_id)
-        matches = []
+        tournament = teams.tournament
+        team_names = {team.id: team.name for team in teams.registered}
+        try:
+            match_filter = _parse_match_filter(request.args)
+        except InvalidFormError as failure:
+            match_filter = MatchFilter()
+            error = error or failure.message
+        listing = list_tournament_matches.execute(tournament_id, match_filter)
+        round_count = max(listing.rounds, default=0)
         standings = None
         champion_team_id = None
-        knockout_bracket = None
         knockout_bye_count = 0
-        if teams.tournament.tournament_format is TournamentFormat.ROUND_ROBIN:
-            try:
-                matches = list_round_robin_matches.execute(tournament_id)
-                standings = calculate_round_robin_standings.execute(tournament_id)
+        first_round_byes: tuple[str, ...] = ()
+        is_round_robin = (
+            tournament.tournament_format is TournamentFormat.ROUND_ROBIN
+        )
+        if is_round_robin:
+            if (
+                tournament.round_robin is not None
+                and tournament.status is not TournamentStatus.DRAFT
+            ):
+                standings = calculate_round_robin_standings.execute(
+                    tournament_id,
+                )
                 champion_team_id = standings.champion_team_id
-            except DomainError:
-                matches = []
-                standings = None
         else:
             knockout_bracket = get_knockout_bracket.execute(tournament_id)
             if knockout_bracket is not None:
                 champion_team_id = knockout_bracket.champion_team_id
+                round_count = len(knockout_bracket.rounds)
+            if tournament.knockout is not None and match_filter.status is None:
+                first_round_byes = tournament.knockout.bye_team_ids
             participant_count = len(teams.registered)
             if participant_count >= 2:
                 bracket_size = 1 << (participant_count - 1).bit_length()
@@ -185,23 +211,49 @@ def create_tournament_blueprint(
             )
             if order_has_all_teams and order_uses_registered_teams:
                 team_order = knockout_config.initial_order
+        started = tournament.status is not TournamentStatus.DRAFT
         return render_template(
             "tournaments/detail.html",
-            tournament=present_tournament(teams.tournament, len(teams.registered)),
+            tournament=present_tournament(tournament, len(teams.registered)),
             registered=present_teams(teams.registered),
-            matches=matches,
+            is_round_robin=is_round_robin,
+            started=started,
+            rounds=present_rounds(
+                listing.matches,
+                tournament_format=tournament.tournament_format,
+                round_count=round_count,
+                team_names=team_names,
+                first_round_byes=first_round_byes,
+            ),
+            round_options=[
+                (number, round_label(
+                    tournament.tournament_format, number, round_count,
+                ))
+                for number in listing.rounds
+            ],
+            match_filter=match_filter,
+            is_filtered=(
+                match_filter.round_number is not None
+                or match_filter.status is not None
+            ),
+            match_total=listing.total,
+            pending_count=listing.pending,
             standings=standings,
             champion_team_id=champion_team_id,
-            knockout_bracket=knockout_bracket,
+            champion_name=team_names.get(champion_team_id or ""),
             knockout_bye_count=knockout_bye_count,
-            team_names={team.id: team.name for team in teams.registered},
             team_positions={
                 team_id: position
                 for position, team_id in enumerate(team_order, start=1)
             },
+            active_tab=tab or ("partidas" if started else "equipes"),
+            open_match=open_match,
             error=error,
             form=form or MultiDict(),
         )
+
+    def detail_url(tournament_id: str, tab: str) -> str:
+        return url_for(".detail", tournament_id=tournament_id, _anchor=tab)
 
     @blueprint.get("/tournaments/<tournament_id>")
     def detail(tournament_id: str) -> str:
@@ -269,7 +321,7 @@ def create_tournament_blueprint(
                 for name, direction in zip(names, directions)
                 if name.strip()
             )
-            configured = configure_round_robin.execute(
+            configure_round_robin.execute(
                 tournament_id,
                 RoundRobinConfigInput(
                     mode=RoundRobinMode(request.form["mode"]),
@@ -279,26 +331,33 @@ def create_tournament_blueprint(
                     tie_breakers=tie_breakers,
                     statistic_fields=tuple(
                         item.strip()
-                        for item in request.form.get("statistic_fields", "").split(",")
+                        for item in request.form.get(
+                            "statistic_fields", "",
+                        ).split(",")
                         if item.strip()
                     ),
                 ),
             )
         except (KeyError, ValueError, InvalidFormError, DomainError) as error:
             message = (
-                error.message if isinstance(error, DomainError)
+                error.message
+                if isinstance(error, (DomainError, InvalidFormError))
                 else "Informe uma configuração válida."
             )
-            return render_detail(tournament_id, message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, message, request.form, tab="configuracao",
+            ), 400
+        return redirect(detail_url(tournament_id, "configuracao"))
 
     @blueprint.post("/tournaments/<tournament_id>/round-robin/generate")
     def generate_round_robin_calendar_route(tournament_id: str):
         try:
             generate_round_robin_calendar.execute(tournament_id)
         except DomainError as error:
-            return render_detail(tournament_id, error.message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, error.message, tab="configuracao",
+            ), 400
+        return redirect(detail_url(tournament_id, "partidas"))
 
     @blueprint.post("/tournaments/<tournament_id>/knockout/generate")
     def generate_knockout_bracket_route(tournament_id: str):
@@ -308,23 +367,65 @@ def create_tournament_blueprint(
             generate_knockout_bracket.execute(tournament_id, data)
         except (InvalidFormError, ValueError, DomainError) as error:
             message = (
-                error.message if isinstance(error, DomainError)
-                else (
-                    error.message
-                    if isinstance(error, InvalidFormError)
-                    else "Informe uma configuração de chaveamento válida."
-                )
+                error.message
+                if isinstance(error, (DomainError, InvalidFormError))
+                else "Informe uma configuração de chaveamento válida."
             )
-            return render_detail(tournament_id, message, request.form), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, message, request.form, tab="configuracao",
+            ), 400
+        return redirect(detail_url(tournament_id, "partidas"))
+
+    def render_start(tournament_id: str, error: str | None = None) -> str:
+        teams = registrations.list(tournament_id)
+        return render_template(
+            "tournaments/start.html",
+            tournament=present_tournament(
+                teams.tournament, len(teams.registered),
+            ),
+            registered=present_teams(teams.registered),
+            error=error,
+        )
+
+    @blueprint.get("/tournaments/<tournament_id>/start")
+    def confirm_start(tournament_id: str):
+        tournament = get_tournament.execute(tournament_id)
+        if tournament.status is not TournamentStatus.DRAFT:
+            return redirect(url_for(".detail", tournament_id=tournament_id))
+        return render_start(tournament_id)
+
+    @blueprint.post("/tournaments/<tournament_id>/start")
+    def start(tournament_id: str):
+        try:
+            start_tournament.execute(tournament_id)
+        except TournamentNotFoundError:
+            raise
+        except DomainError as error:
+            return render_start(tournament_id, error.message), 400
+        return redirect(detail_url(tournament_id, "partidas"))
 
     @blueprint.post("/tournaments/<tournament_id>/knockout/start")
     def start_knockout_tournament_route(tournament_id: str):
         try:
             start_knockout_tournament.execute(tournament_id)
         except DomainError as error:
-            return render_detail(tournament_id, error.message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, error.message, tab="configuracao",
+            ), 400
+        return redirect(detail_url(tournament_id, "partidas"))
+
+    def render_match_error(
+        tournament_id: str, match_id: str, error: Exception,
+    ):
+        message = (
+            error.message
+            if isinstance(error, (DomainError, InvalidFormError))
+            else "Informe um resultado válido."
+        )
+        return render_detail(
+            tournament_id, message, request.form,
+            tab="partidas", open_match=match_id,
+        ), 400
 
     @blueprint.post(
         "/tournaments/<tournament_id>/knockout/matches/<match_id>/result"
@@ -347,67 +448,76 @@ def create_tournament_blueprint(
                 ),
             )
         except (InvalidFormError, ValueError, DomainError) as error:
-            message = (
-                error.message if isinstance(error, DomainError)
-                else (
-                    error.message
-                    if isinstance(error, InvalidFormError)
-                    else "Informe um resultado válido."
-                )
-            )
-            return render_detail(tournament_id, message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_match_error(tournament_id, match_id, error)
+        return redirect(detail_url(tournament_id, "partidas"))
 
     @blueprint.post("/tournaments/<tournament_id>/knockout/finish")
     def finish_knockout_tournament_route(tournament_id: str):
         try:
             finish_knockout_tournament.execute(tournament_id)
         except DomainError as error:
-            return render_detail(tournament_id, error.message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, error.message, tab="partidas",
+            ), 400
+        return redirect(detail_url(tournament_id, "partidas"))
 
     @blueprint.post("/tournaments/<tournament_id>/matches/<match_id>/result")
     def record_round_robin_result_route(tournament_id: str, match_id: str):
         try:
-            tournament = get_tournament.execute(tournament_id)
             result_value = request.form.get("result", "")
             if not result_value:
                 raise InvalidFormError("Informe vitória, empate ou derrota.")
-            result = MatchResult(result_value)
-            first_score = _parse_optional_score(request.form, "first_score")
-            second_score = _parse_optional_score(request.form, "second_score")
-            first_stats = _parse_match_stats(request.form, "first")
-            second_stats = _parse_match_stats(request.form, "second")
             record_round_robin_result.execute(
                 tournament_id,
                 match_id,
                 RoundRobinResultInput(
-                    result=result,
-                    first_score=first_score,
-                    second_score=second_score,
-                    first_team_stats=first_stats,
-                    second_team_stats=second_stats,
+                    result=MatchResult(result_value),
+                    first_score=_parse_optional_score(
+                        request.form, "first_score",
+                    ),
+                    second_score=_parse_optional_score(
+                        request.form, "second_score",
+                    ),
+                    first_team_stats=_parse_match_stats(
+                        request.form, "first",
+                    ),
+                    second_team_stats=_parse_match_stats(
+                        request.form, "second",
+                    ),
                 ),
             )
         except (InvalidFormError, ValueError, DomainError) as error:
-            message = (
-                error.message if isinstance(error, DomainError)
-                else (
-                    error.message
-                    if isinstance(error, InvalidFormError)
-                    else "Informe um resultado válido."
-                )
+            return render_match_error(tournament_id, match_id, error)
+        return redirect(detail_url(tournament_id, "partidas"))
+
+    @blueprint.post(
+        "/tournaments/<tournament_id>/matches/<match_id>/schedule"
+    )
+    def schedule_match_route(tournament_id: str, match_id: str):
+        try:
+            schedule_match.execute(
+                tournament_id,
+                match_id,
+                MatchScheduleInput(
+                    scheduled_date=_parse_date(
+                        request.form.get("scheduled_date", ""), "partida",
+                    ),
+                    location=request.form.get("location"),
+                ),
             )
-            return render_detail(tournament_id, message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+        except (InvalidFormError, DomainError) as error:
+            return render_match_error(tournament_id, match_id, error)
+        return redirect(detail_url(tournament_id, "partidas"))
 
     @blueprint.post("/tournaments/<tournament_id>/round-robin/finish")
     def finish_round_robin_tournament_route(tournament_id: str):
         try:
             finish_round_robin_tournament.execute(tournament_id)
         except DomainError as error:
-            return render_detail(tournament_id, error.message), 400
-        return redirect(url_for(".detail", tournament_id=tournament_id))
+            return render_detail(
+                tournament_id, error.message, tab="partidas",
+            ), 400
+        return redirect(detail_url(tournament_id, "classificacao"))
 
     return blueprint
 
@@ -519,6 +629,19 @@ def _parse_match_stats(
         except ValueError:
             raise InvalidFormError("As estatísticas devem ser numéricas.") from None
     return values or None
+
+
+def _parse_match_filter(args: MultiDict[str, str]) -> MatchFilter:
+    round_value = args.get("round", "").strip()
+    status_value = args.get("match_status", "").strip()
+    try:
+        round_number = int(round_value) if round_value else None
+        status = MatchStatus(status_value) if status_value else None
+    except ValueError:
+        raise InvalidFormError(
+            "Filtro de partidas inválido. Mostrando todas as partidas."
+        ) from None
+    return MatchFilter(round_number=round_number, status=status)
 
 
 def _parse_date(value: str, label: str) -> date | None:

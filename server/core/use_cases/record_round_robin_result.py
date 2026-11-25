@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from server.core.entities.match import Match, MatchResult
-from server.core.entities.tournament import TournamentFormat, TournamentStatus
+from server.core.entities.tournament import TournamentFormat
 from server.core.errors import InvalidTournamentError
 from server.core.interfaces.match_repository import MatchRepository
 from server.core.interfaces.tournament_repository import TournamentRepository
@@ -39,13 +39,7 @@ class RecordRoundRobinResult:
             raise InvalidTournamentError(
                 "Esta operação só pode ser usada em pontos corridos."
             )
-        if tournament.status not in (
-            TournamentStatus.IN_PROGRESS,
-            TournamentStatus.FINISHED,
-        ):
-            raise InvalidTournamentError(
-                "Só é possível registrar resultados em torneios iniciados."
-            )
+        tournament.ensure_accepts_results()
         match = self._matches.get(match_id)
         if match is None or match.tournament_id != tournament_id:
             raise InvalidTournamentError("Partida não encontrada.")

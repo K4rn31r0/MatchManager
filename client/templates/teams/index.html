@@ -3,15 +3,15 @@
 {% block title %}Equipes · MatchManager{% endblock %}
 
 {% block content %}
-<section class="card">
-  <h1>Nova equipe</h1>
-  {% with action=url_for('teams.create'), submit_label='Criar equipe' %}
-    {% include "teams/_form.html" %}
-  {% endwith %}
-</section>
-
 <section>
-  <h2>Equipes</h2>
+  <div class="tournament-header">
+    <h1>Equipes</h1>
+    <a class="button" href="#nova-equipe">Nova equipe</a>
+  </div>
+
+  {% if error %}
+  <p class="alert" role="alert">Não foi possível criar a equipe. <a href="#nova-equipe">Ver o erro no formulário</a>.</p>
+  {% endif %}
 
   <form method="get" action="{{ url_for('teams.index') }}" class="search" role="search">
     <input type="search" name="q" value="{{ search }}" placeholder="Buscar pelo nome" aria-label="Buscar equipe pelo nome">
@@ -33,7 +33,14 @@
   {% elif search %}
   <p class="empty">Nenhuma equipe encontrada para “{{ search }}”. <a class="button button-secondary" href="{{ url_for('teams.index') }}">Limpar busca</a></p>
   {% else %}
-  <p class="empty">Nenhuma equipe cadastrada ainda. Crie a primeira acima.</p>
+  <p class="empty">Nenhuma equipe cadastrada ainda. Crie a primeira abaixo.</p>
   {% endif %}
+</section>
+
+<section class="card" id="nova-equipe">
+  <h2>Nova equipe</h2>
+  {% with action=url_for('teams.create'), submit_label='Criar equipe' %}
+    {% include "teams/_form.html" %}
+  {% endwith %}
 </section>
 {% endblock %}

@@ -1,5 +1,6 @@
 """Persist tournament matches in the shared local JSON document."""
 
+from datetime import date
 from typing import Any
 
 from server.core.entities.match import Match, MatchResult, MatchStatus
@@ -72,6 +73,10 @@ def _to_record(match: Match) -> dict[str, Any]:
         record["second_team_stats"] = match.second_team_stats
     if match.bracket_position is not None:
         record["bracket_position"] = match.bracket_position
+    if match.scheduled_date is not None:
+        record["scheduled_date"] = match.scheduled_date.isoformat()
+    if match.location is not None:
+        record["location"] = match.location
     return record
 
 
@@ -102,4 +107,9 @@ def _from_record(record: dict[str, Any]) -> Match | None:
         second_score=record.get("second_score"),
         first_team_stats=record.get("first_team_stats"),
         second_team_stats=record.get("second_team_stats"),
+        scheduled_date=(
+            date.fromisoformat(record["scheduled_date"])
+            if record.get("scheduled_date") else None
+        ),
+        location=record.get("location"),
     )

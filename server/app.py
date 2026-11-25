@@ -41,7 +41,8 @@ from server.core.use_cases.generate_round_robin_calendar import GenerateRoundRob
 from server.core.use_cases.record_round_robin_result import RecordRoundRobinResult
 from server.core.use_cases.calculate_round_robin_standings import CalculateRoundRobinStandings
 from server.core.use_cases.finish_round_robin_tournament import FinishRoundRobinTournament
-from server.core.use_cases.list_round_robin_matches import ListRoundRobinMatches
+from server.core.use_cases.list_tournament_matches import ListTournamentMatches
+from server.core.use_cases.schedule_match import ScheduleMatch
 from server.core.use_cases.generate_knockout_bracket import (
     GenerateKnockoutBracket,
 )
@@ -53,6 +54,11 @@ from server.core.use_cases.record_knockout_result import RecordKnockoutResult
 from server.core.use_cases.finish_knockout_tournament import (
     FinishKnockoutTournament,
 )
+from server.core.use_cases.start_round_robin_tournament import (
+    StartRoundRobinTournament,
+)
+from server.core.use_cases.start_tournament import StartTournament
+from server.core.entities.tournament import TournamentFormat
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_FILE = PROJECT_ROOT / "instance" / "matchmanager.json"
@@ -80,6 +86,26 @@ def create_app(data_file: Path | None = None) -> Flask:
     get_team = GetTeam(team_repository)
     list_teams = ListTeams(team_repository)
     get_tournament = GetTournament(tournament_repository)
+    generate_round_robin_calendar = GenerateRoundRobinCalendar(
+        tournament_repository,
+        registration_repository,
+        match_repository,
+    )
+    start_knockout_tournament = StartKnockoutTournament(
+        tournament_repository,
+        registration_repository,
+        match_repository,
+    )
+    start_tournament = StartTournament(
+        tournament_repository,
+        {
+            TournamentFormat.ROUND_ROBIN: StartRoundRobinTournament(
+                tournament_repository,
+                generate_round_robin_calendar,
+            ),
+            TournamentFormat.KNOCKOUT: start_knockout_tournament,
+        },
+    )
 
     registrations = TournamentRegistrations(
         registration_repository, get_tournament, get_team,
@@ -100,11 +126,7 @@ def create_app(data_file: Path | None = None) -> Flask:
             update_tournament=UpdateTournament(tournament_repository, datetime.now),
             delete_tournament=DeleteTournament(tournament_repository),
             configure_round_robin=ConfigureRoundRobin(tournament_repository),
-            generate_round_robin_calendar=GenerateRoundRobinCalendar(
-                tournament_repository,
-                registration_repository,
-                match_repository,
-            ),
+            generate_round_robin_calendar=generate_round_robin_calendar,
             record_round_robin_result=RecordRoundRobinResult(
                 tournament_repository,
                 match_repository,
@@ -119,7 +141,11 @@ def create_app(data_file: Path | None = None) -> Flask:
                 tournament_repository,
                 match_repository,
             ),
-            list_round_robin_matches=ListRoundRobinMatches(
+            list_tournament_matches=ListTournamentMatches(
+                tournament_repository,
+                match_repository,
+            ),
+            schedule_match=ScheduleMatch(
                 tournament_repository,
                 match_repository,
             ),
@@ -133,11 +159,7 @@ def create_app(data_file: Path | None = None) -> Flask:
                 tournament_repository,
                 match_repository,
             ),
-            start_knockout_tournament=StartKnockoutTournament(
-                tournament_repository,
-                registration_repository,
-                match_repository,
-            ),
+            start_knockout_tournament=start_knockout_tournament,
             record_knockout_result=RecordKnockoutResult(
                 tournament_repository,
                 match_repository,
@@ -146,6 +168,7 @@ def create_app(data_file: Path | None = None) -> Flask:
                 tournament_repository,
                 match_repository,
             ),
+            start_tournament=start_tournament,
         )
     )
     app.register_blueprint(

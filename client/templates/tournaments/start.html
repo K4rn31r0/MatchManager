@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Iniciar {{ tournament.name }} · MatchManager{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Iniciar torneio</h1>
+  {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+  <p>Revise os dados de “{{ tournament.name }}” antes de iniciar.</p>
+  <dl>
+    <dt>Formato</dt>
+    <dd>{{ tournament.format_label }}</dd>
+    {% if tournament.round_robin %}
+    <dt>Turnos</dt>
+    <dd>{% if tournament.round_robin.mode.value == 'double' %}Ida e volta{% else %}Turno único{% endif %}</dd>
+    <dt>Pontuação</dt>
+    <dd>Vitória {{ tournament.round_robin.win_points }} · Empate {{ tournament.round_robin.draw_points }} · Derrota {{ tournament.round_robin.loss_points }}</dd>
+    <dt>Critérios de desempate</dt>
+    <dd>{% for criterion in tournament.round_robin.tie_breakers %}{{ criterion.name }} ({% if criterion.direction.value == 'positive' %}maiores{% else %}menores{% endif %}){% if not loop.last %}, {% endif %}{% endfor %}</dd>
+    {% endif %}
+    <dt>Participantes ({{ tournament.participant_count }})</dt>
+    <dd>
+      {% if registered %}
+      <ul>
+        {% for team in registered %}<li>{{ team.name }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      Nenhuma equipe inscrita.
+      {% endif %}
+    </dd>
+  </dl>
+  <p>Ao iniciar, as inscrições serão encerradas, as partidas serão geradas e
+    a pontuação, os critérios, as estatísticas e a estrutura ficarão bloqueados.
+    Depois do início, apenas os resultados poderão ser registrados ou corrigidos.</p>
+  <form method="post" class="form">
+    <button type="submit">Confirmar início</button>
+    <a class="button button-secondary" href="{{ url_for('tournaments.detail', tournament_id=tournament.id) }}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

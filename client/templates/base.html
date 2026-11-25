@@ -9,9 +9,9 @@
 <body>
   <header class="topbar">
     <a class="brand" href="{{ url_for('tournaments.index') }}">MatchManager</a>
-    <nav>
-      <a href="{{ url_for('tournaments.index') }}">Torneios</a>
-      <a href="{{ url_for('teams.index') }}">Equipes</a>
+    <nav aria-label="Navegação principal">
+      <a href="{{ url_for('tournaments.index') }}"{% if request.blueprint in ('tournaments', 'registrations') %} aria-current="page"{% endif %}>Torneios</a>
+      <a href="{{ url_for('teams.index') }}"{% if request.blueprint == 'teams' %} aria-current="page"{% endif %}>Equipes</a>
     </nav>
   </header>
   <main class="container">
