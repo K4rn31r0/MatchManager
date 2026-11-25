@@ -165,3 +165,17 @@ Após a revisão obrigatória, corrigi o encerramento para rejeitar também part
 > Sim, vamos ter que fazer as issues 9 e 10, depois dar push e commit e e testar se a aplicação está funcionando. Pode ir.
 
 **O que foi feito:** A página do torneio passou a ter abas (Partidas, Classificação, Equipes e Configuração/Regras) sem JavaScript, usando âncoras com `:target` e `:has()` como melhoria progressiva. Foram criados os casos de uso `ListTournamentMatches` (filtro por rodada/fase e status, comum aos dois formatos) e `ScheduleMatch` (data e local opcionais, independentes do resultado), com a entidade `Match` ganhando `schedule()` e a persistência JSON os novos campos. Um presenter de partidas formata placar, vencedor, status e nomes de fase. A interface ganhou navegação com seção atual marcada, links de retorno, estados vazios, confirmação de encerramento com `<details>`, formulários que reabrem com os valores digitados em caso de erro e CSS mobile-first com tabela rolável. A suíte completa passou (220 testes) e a aplicação foi testada ponta a ponta no servidor real, incluindo capturas de tela em largura de celular e desktop.
+
+## 012 — Documentação de arquitetura, SOLID e uso de IA no README
+
+**Data:** 2026-11-25
+**Ferramenta:** Claude Code (Claude Opus 5.5)
+**Branch:** `docs-readme-arquitetura-ia`
+
+**Prompt:**
+
+> faça os 2 e o 3, pf?
+
+(Itens 2 e 3 da lista de pendências: documentar no README a aplicação de Clean Architecture e SOLID, e justificar o uso de IA para o bônus.)
+
+**O que foi feito:** O README passou a explicar o projeto para quem for avaliá-lo. A seção de arquitetura traz um diagrama das quatro camadas, uma tabela relacionando cada camada à sua pasta e responsabilidade, um comando que comprova que o core não importa Flask nem infraestrutura, e o fluxo de "criar equipe" seguido camada por camada. A seção de SOLID aponta cada princípio para arquivos reais, como o Strategy de início de torneio (`StartTournament`) para o princípio aberto/fechado e a `TeamParticipationQuery` para a segregação de interfaces. Também foi incluído o resumo dos 220 testes por camada. A seção de IA descreve a estratégia de desenvolvimento orientado a especificação (`AGENTS.md`, spec, issues com DAG, TDD, decisões de negócio tomadas pelo grupo, revisão por PR e histórico de prompts), as ferramentas usadas em cada issue e por que essa estratégia foi adotada. Só foram descritos comportamentos conferidos no código; os 33 links do README apontam para arquivos existentes.
