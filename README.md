@@ -169,14 +169,6 @@ A IA foi usada como **ferramenta de implementação dentro de um processo contro
 6. **Revisão humana e por PR.** Cada issue entrou na `main` por Pull Request. As revisões encontraram problemas que a IA tinha deixado passar. O principal: depois das issues 05 e 06, um torneio de pontos corridos não podia ser iniciado pelo app, embora os testes unitários passassem. Isso foi corrigido na issue 09.
 7. **Rastreabilidade.** Cada ação relevante está registrada em [`docs/agents/prompt-history.md`](docs/agents/prompt-history.md), com o prompt usado, as decisões tomadas e o resultado. Cada issue tem seus critérios de aceitação marcados.
 
-### Ferramentas
-
-| Ferramenta | Uso |
-|---|---|
-| Claude Code (Claude Opus 5.5) | Issues 01, 02, 09 e 10; revisões de arquitetura e documentação |
-| Codex | Issues 03 e 04 |
-| GitHub Copilot | Issues 05 a 08 |
-
 As skills usadas (`to-spec`, `to-tickets`, `tdd`, `implement`, `grill-me` e `code-review`) estão em [`.github/skills/`](.github/skills/).
 
 ### Por que essa estratégia
