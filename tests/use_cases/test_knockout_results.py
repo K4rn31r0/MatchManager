@@ -31,7 +31,8 @@ class InMemoryMatches:
 
     def list_for_tournament(self, tournament_id):
         return [
-            match for match in self.items.values()
+            match
+            for match in self.items.values()
             if match.tournament_id == tournament_id
         ]
 
@@ -161,21 +162,23 @@ def test_knockout_rejects_missing_winner_draw_and_invalid_scores(
 
 
 def test_knockout_winner_advances_into_the_next_match():
-    matches = InMemoryMatches([
-        make_match(match_id="m1", bracket_position=1),
-        make_match(
-            match_id="m2",
-            bracket_position=2,
-            first_team_id="c",
-            second_team_id="d",
-        ),
-        make_match(
-            match_id="final",
-            round_number=2,
-            first_team_id=None,
-            second_team_id=None,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            make_match(match_id="m1", bracket_position=1),
+            make_match(
+                match_id="m2",
+                bracket_position=2,
+                first_team_id="c",
+                second_team_id="d",
+            ),
+            make_match(
+                match_id="final",
+                round_number=2,
+                first_team_id=None,
+                second_team_id=None,
+            ),
+        ]
+    )
     tournaments = InMemoryTournamentRepository()
     tournaments.add(make_tournament(("a", "b", "c", "d")))
     use_case = RecordKnockoutResult(tournaments, matches)
@@ -191,26 +194,28 @@ def test_knockout_winner_advances_into_the_next_match():
 
 
 def test_correcting_knockout_result_updates_next_match_before_it_is_played():
-    matches = InMemoryMatches([
-        make_match(
-            match_id="m1",
-            bracket_position=1,
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.FIRST_WIN,
-        ),
-        make_match(
-            match_id="m2",
-            bracket_position=2,
-            first_team_id="c",
-            second_team_id="d",
-        ),
-        make_match(
-            match_id="final",
-            round_number=2,
-            first_team_id="a",
-            second_team_id=None,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            make_match(
+                match_id="m1",
+                bracket_position=1,
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.FIRST_WIN,
+            ),
+            make_match(
+                match_id="m2",
+                bracket_position=2,
+                first_team_id="c",
+                second_team_id="d",
+            ),
+            make_match(
+                match_id="final",
+                round_number=2,
+                first_team_id="a",
+                second_team_id=None,
+            ),
+        ]
+    )
     tournaments = InMemoryTournamentRepository()
     tournaments.add(make_tournament(("a", "b", "c", "d")))
 
@@ -225,28 +230,30 @@ def test_correcting_knockout_result_updates_next_match_before_it_is_played():
 
 
 def test_knockout_result_cannot_be_corrected_after_a_subsequent_match():
-    matches = InMemoryMatches([
-        make_match(
-            match_id="m1",
-            bracket_position=1,
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.FIRST_WIN,
-        ),
-        make_match(
-            match_id="m2",
-            bracket_position=2,
-            first_team_id="c",
-            second_team_id="d",
-        ),
-        make_match(
-            match_id="final",
-            round_number=2,
-            first_team_id="a",
-            second_team_id="c",
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.FIRST_WIN,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            make_match(
+                match_id="m1",
+                bracket_position=1,
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.FIRST_WIN,
+            ),
+            make_match(
+                match_id="m2",
+                bracket_position=2,
+                first_team_id="c",
+                second_team_id="d",
+            ),
+            make_match(
+                match_id="final",
+                round_number=2,
+                first_team_id="a",
+                second_team_id="c",
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.FIRST_WIN,
+            ),
+        ]
+    )
     tournaments = InMemoryTournamentRepository()
     tournaments.add(make_tournament(("a", "b", "c", "d")))
 
@@ -270,9 +277,11 @@ def test_finish_knockout_rejects_pending_matches():
 
 
 def test_finish_knockout_rejects_completed_match_without_winner():
-    matches = InMemoryMatches([
-        make_match(status=MatchStatus.COMPLETED, result=None),
-    ])
+    matches = InMemoryMatches(
+        [
+            make_match(status=MatchStatus.COMPLETED, result=None),
+        ]
+    )
     tournaments = InMemoryTournamentRepository()
     tournaments.add(make_tournament())
 

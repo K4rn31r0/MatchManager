@@ -31,7 +31,9 @@ from server.core.use_cases.delete_tournament import DeleteTournament
 from server.core.use_cases.get_tournament import GetTournament
 from server.core.use_cases.update_tournament import UpdateTournament
 from server.core.use_cases.list_tournaments import ListTournaments
-from server.core.use_cases.tournament_registrations import TournamentRegistrations
+from server.core.use_cases.tournament_registrations import (
+    TournamentRegistrations,
+)
 from server.core.use_cases.configure_round_robin import (
     ConfigureRoundRobin,
     RoundRobinConfigInput,
@@ -203,12 +205,12 @@ def create_tournament_blueprint(
         knockout_config = teams.tournament.knockout
         team_order = registered_ids
         if knockout_config is not None:
-            order_has_all_teams = (
-                len(knockout_config.initial_order) == len(registered_ids)
+            order_has_all_teams = len(knockout_config.initial_order) == len(
+                registered_ids
             )
-            order_uses_registered_teams = (
-                set(knockout_config.initial_order) == set(registered_ids)
-            )
+            order_uses_registered_teams = set(
+                knockout_config.initial_order
+            ) == set(registered_ids)
             if order_has_all_teams and order_uses_registered_teams:
                 team_order = knockout_config.initial_order
         started = tournament.status is not TournamentStatus.DRAFT
@@ -226,9 +228,14 @@ def create_tournament_blueprint(
                 first_round_byes=first_round_byes,
             ),
             round_options=[
-                (number, round_label(
-                    tournament.tournament_format, number, round_count,
-                ))
+                (
+                    number,
+                    round_label(
+                        tournament.tournament_format,
+                        number,
+                        round_count,
+                    ),
+                )
                 for number in listing.rounds
             ],
             match_filter=match_filter,
@@ -269,7 +276,9 @@ def create_tournament_blueprint(
             return render_detail(tournament_id, error.message), 400
         return redirect(url_for(".detail", tournament_id=tournament_id))
 
-    @blueprint.route("/tournaments/<tournament_id>/edit", methods=["GET", "POST"])
+    @blueprint.route(
+        "/tournaments/<tournament_id>/edit", methods=["GET", "POST"]
+    )
     def edit(tournament_id: str):
         tournament = get_tournament.execute(tournament_id)
         form = {
@@ -283,31 +292,42 @@ def create_tournament_blueprint(
         if request.method == "POST":
             form = request.form
             try:
-                update_tournament.execute(tournament_id, _parse_create_form(form))
+                update_tournament.execute(
+                    tournament_id, _parse_create_form(form)
+                )
             except (InvalidFormError, DomainError) as failure:
                 error = failure.message
             else:
-                return redirect(url_for(".detail", tournament_id=tournament_id))
+                return redirect(
+                    url_for(".detail", tournament_id=tournament_id)
+                )
         return render_template(
-            "tournaments/edit.html", tournament=present_tournament(tournament),
-            form=form, format_options=FORMAT_LABELS, error=error,
+            "tournaments/edit.html",
+            tournament=present_tournament(tournament),
+            form=form,
+            format_options=FORMAT_LABELS,
+            error=error,
         ), 400 if error else 200
 
-    @blueprint.route("/tournaments/<tournament_id>/delete", methods=["GET", "POST"])
+    @blueprint.route(
+        "/tournaments/<tournament_id>/delete", methods=["GET", "POST"]
+    )
     def delete(tournament_id: str):
         tournament = get_tournament.execute(tournament_id)
         error = None
         if request.method == "POST":
             try:
                 delete_tournament.execute(
-                    tournament_id, confirmed=request.form.get("confirmed") == "yes",
+                    tournament_id,
+                    confirmed=request.form.get("confirmed") == "yes",
                 )
             except DomainError as failure:
                 error = failure.message
             else:
                 return redirect(url_for(".index"))
         return render_template(
-            "tournaments/delete.html", tournament=present_tournament(tournament),
+            "tournaments/delete.html",
+            tournament=present_tournament(tournament),
             error=error,
         ), 400 if error else 200
 
@@ -332,7 +352,8 @@ def create_tournament_blueprint(
                     statistic_fields=tuple(
                         item.strip()
                         for item in request.form.get(
-                            "statistic_fields", "",
+                            "statistic_fields",
+                            "",
                         ).split(",")
                         if item.strip()
                     ),
@@ -345,7 +366,10 @@ def create_tournament_blueprint(
                 else "Informe uma configuração válida."
             )
             return render_detail(
-                tournament_id, message, request.form, tab="configuracao",
+                tournament_id,
+                message,
+                request.form,
+                tab="configuracao",
             ), 400
         return redirect(detail_url(tournament_id, "configuracao"))
 
@@ -355,7 +379,9 @@ def create_tournament_blueprint(
             generate_round_robin_calendar.execute(tournament_id)
         except DomainError as error:
             return render_detail(
-                tournament_id, error.message, tab="configuracao",
+                tournament_id,
+                error.message,
+                tab="configuracao",
             ), 400
         return redirect(detail_url(tournament_id, "partidas"))
 
@@ -372,7 +398,10 @@ def create_tournament_blueprint(
                 else "Informe uma configuração de chaveamento válida."
             )
             return render_detail(
-                tournament_id, message, request.form, tab="configuracao",
+                tournament_id,
+                message,
+                request.form,
+                tab="configuracao",
             ), 400
         return redirect(detail_url(tournament_id, "partidas"))
 
@@ -381,7 +410,8 @@ def create_tournament_blueprint(
         return render_template(
             "tournaments/start.html",
             tournament=present_tournament(
-                teams.tournament, len(teams.registered),
+                teams.tournament,
+                len(teams.registered),
             ),
             registered=present_teams(teams.registered),
             error=error,
@@ -410,12 +440,16 @@ def create_tournament_blueprint(
             start_knockout_tournament.execute(tournament_id)
         except DomainError as error:
             return render_detail(
-                tournament_id, error.message, tab="configuracao",
+                tournament_id,
+                error.message,
+                tab="configuracao",
             ), 400
         return redirect(detail_url(tournament_id, "partidas"))
 
     def render_match_error(
-        tournament_id: str, match_id: str, error: Exception,
+        tournament_id: str,
+        match_id: str,
+        error: Exception,
     ):
         message = (
             error.message
@@ -423,8 +457,11 @@ def create_tournament_blueprint(
             else "Informe um resultado válido."
         )
         return render_detail(
-            tournament_id, message, request.form,
-            tab="partidas", open_match=match_id,
+            tournament_id,
+            message,
+            request.form,
+            tab="partidas",
+            open_match=match_id,
         ), 400
 
     @blueprint.post(
@@ -440,10 +477,12 @@ def create_tournament_blueprint(
                 KnockoutResultInput(
                     result=result,
                     first_score=_parse_optional_score(
-                        request.form, "first_score",
+                        request.form,
+                        "first_score",
                     ),
                     second_score=_parse_optional_score(
-                        request.form, "second_score",
+                        request.form,
+                        "second_score",
                     ),
                 ),
             )
@@ -457,7 +496,9 @@ def create_tournament_blueprint(
             finish_knockout_tournament.execute(tournament_id)
         except DomainError as error:
             return render_detail(
-                tournament_id, error.message, tab="partidas",
+                tournament_id,
+                error.message,
+                tab="partidas",
             ), 400
         return redirect(detail_url(tournament_id, "partidas"))
 
@@ -473,16 +514,20 @@ def create_tournament_blueprint(
                 RoundRobinResultInput(
                     result=MatchResult(result_value),
                     first_score=_parse_optional_score(
-                        request.form, "first_score",
+                        request.form,
+                        "first_score",
                     ),
                     second_score=_parse_optional_score(
-                        request.form, "second_score",
+                        request.form,
+                        "second_score",
                     ),
                     first_team_stats=_parse_match_stats(
-                        request.form, "first",
+                        request.form,
+                        "first",
                     ),
                     second_team_stats=_parse_match_stats(
-                        request.form, "second",
+                        request.form,
+                        "second",
                     ),
                 ),
             )
@@ -490,9 +535,7 @@ def create_tournament_blueprint(
             return render_match_error(tournament_id, match_id, error)
         return redirect(detail_url(tournament_id, "partidas"))
 
-    @blueprint.post(
-        "/tournaments/<tournament_id>/matches/<match_id>/schedule"
-    )
+    @blueprint.post("/tournaments/<tournament_id>/matches/<match_id>/schedule")
     def schedule_match_route(tournament_id: str, match_id: str):
         try:
             schedule_match.execute(
@@ -500,7 +543,8 @@ def create_tournament_blueprint(
                 match_id,
                 MatchScheduleInput(
                     scheduled_date=_parse_date(
-                        request.form.get("scheduled_date", ""), "partida",
+                        request.form.get("scheduled_date", ""),
+                        "partida",
                     ),
                     location=request.form.get("location"),
                 ),
@@ -515,7 +559,9 @@ def create_tournament_blueprint(
             finish_round_robin_tournament.execute(tournament_id)
         except DomainError as error:
             return render_detail(
-                tournament_id, error.message, tab="partidas",
+                tournament_id,
+                error.message,
+                tab="partidas",
             ), 400
         return redirect(detail_url(tournament_id, "classificacao"))
 
@@ -560,16 +606,14 @@ def _parse_knockout_form(
         has_non_positive_position = any(
             position < 1 for position in position_values
         )
-        has_duplicate_positions = (
-            len(set(position_values)) != len(position_values)
+        has_duplicate_positions = len(set(position_values)) != len(
+            position_values
         )
         if has_non_positive_position or has_duplicate_positions:
             raise InvalidFormError(
                 "Cada equipe precisa ter uma posição manual única."
             )
-        order = tuple(
-            team_id for _, team_id in sorted(positions)
-        )
+        order = tuple(team_id for _, team_id in sorted(positions))
     return KnockoutBracketInput(
         order_mode=order_mode,
         initial_order=order,
@@ -625,9 +669,11 @@ def _parse_match_stats(
         if not name.startswith(prefix) or not value.strip():
             continue
         try:
-            values[name[len(prefix):]] = int(value)
+            values[name.removeprefix(prefix)] = int(value)
         except ValueError:
-            raise InvalidFormError("As estatísticas devem ser numéricas.") from None
+            raise InvalidFormError(
+                "As estatísticas devem ser numéricas."
+            ) from None
     return values or None
 
 

@@ -2,7 +2,9 @@
 
 from server.core.entities.team import Team
 from server.core.entities.tournament import TournamentStatus
-from server.core.interfaces.team_participation_query import TeamParticipationQuery
+from server.core.interfaces.team_participation_query import (
+    TeamParticipationQuery,
+)
 from server.infrastructure.db.json_file_storage import JsonFileStorage
 from server.infrastructure.db.json_team_repository import team_to_record
 
@@ -36,7 +38,8 @@ class JsonRegistrationRepository(TeamParticipationQuery):
     def remove(self, tournament_id: str, team_id: str) -> None:
         document = self._storage.read()
         document["registrations"] = [
-            record for record in document.get("registrations", [])
+            record
+            for record in document.get("registrations", [])
             if (record["tournament_id"], record["team_id"])
             != (tournament_id, team_id)
         ]
@@ -45,7 +48,8 @@ class JsonRegistrationRepository(TeamParticipationQuery):
     def is_in_started_tournament(self, team_id: str) -> bool:
         document = self._storage.read()
         started = {
-            record["id"] for record in document.get("tournaments", [])
+            record["id"]
+            for record in document.get("tournaments", [])
             if record["status"] != TournamentStatus.DRAFT.value
         }
         return any(

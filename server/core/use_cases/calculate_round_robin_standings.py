@@ -12,7 +12,9 @@ from server.core.entities.tournament import (
 )
 from server.core.errors import InvalidTournamentError
 from server.core.interfaces.match_repository import MatchRepository
-from server.core.interfaces.registration_repository import RegistrationRepository
+from server.core.interfaces.registration_repository import (
+    RegistrationRepository,
+)
 from server.core.interfaces.team_repository import TeamRepository
 from server.core.interfaces.tournament_repository import TournamentRepository
 from server.core.use_cases.get_tournament import GetTournament
@@ -58,7 +60,8 @@ class CalculateRoundRobinStandings:
             )
         if tournament.round_robin is None:
             raise InvalidTournamentError(
-                "Configure os pontos corridos antes de calcular a classificação."
+                "Configure os pontos corridos antes de calcular a "
+                "classificação."
             )
         team_ids = self._registrations.team_ids(tournament_id)
         teams = {
@@ -66,10 +69,7 @@ class CalculateRoundRobinStandings:
             for team in self._teams.list_all()
             if team.id in team_ids
         }
-        rows = [
-            _empty_row(team)
-            for team in teams.values()
-        ]
+        rows = [_empty_row(team) for team in teams.values()]
         row_by_team = {row.team.id: row for row in rows}
         mutable = {
             row.team.id: {
@@ -135,7 +135,10 @@ class CalculateRoundRobinStandings:
                 right_value = right.statistics.get(tie_breaker.name)
                 if left_value is not None and right_value is not None:
                     if left_value != right_value:
-                        if tie_breaker.direction is TieBreakerDirection.POSITIVE:
+                        if (
+                            tie_breaker.direction
+                            is TieBreakerDirection.POSITIVE
+                        ):
                             return -1 if left_value > right_value else 1
                         return -1 if left_value < right_value else 1
             left_name = normalize_name(left.team.name)
@@ -167,7 +170,11 @@ class CalculateRoundRobinStandings:
             )
             for left, right in zip(positioned, positioned[1:])
         )
-        champion = positioned[0].team.id if tournament.status.value == "finished" else None
+        champion = (
+            positioned[0].team.id
+            if tournament.status.value == "finished"
+            else None
+        )
         return RoundRobinStandings(
             rows=positioned,
             champion_team_id=champion,

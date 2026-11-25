@@ -13,7 +13,8 @@ def _load(path):
 def _started_round_robin(path, team_names):
     client = create_app(path).test_client()
     client.post(
-        "/tournaments", data={"name": "Liga", "format": "round_robin"},
+        "/tournaments",
+        data={"name": "Liga", "format": "round_robin"},
     )
     for name in team_names:
         client.post("/teams/", data={"name": name})
@@ -33,9 +34,12 @@ def _started_round_robin(path, team_names):
             "statistic_fields": "Gols",
         },
     )
-    assert client.post(
-        f"/tournaments/{tournament_id}/start",
-    ).status_code == 302
+    assert (
+        client.post(
+            f"/tournaments/{tournament_id}/start",
+        ).status_code
+        == 302
+    )
     return client, tournament_id
 
 
@@ -63,7 +67,8 @@ def test_started_round_robin_shows_standings_tab_and_matches_default(
     tmp_path,
 ):
     client, tournament_id = _started_round_robin(
-        tmp_path / "data.json", ["Águias", "Tigres"],
+        tmp_path / "data.json",
+        ["Águias", "Tigres"],
     )
 
     html = client.get(f"/tournaments/{tournament_id}").get_data(as_text=True)
@@ -78,7 +83,8 @@ def test_started_round_robin_shows_standings_tab_and_matches_default(
 def test_matches_can_be_filtered_by_round_and_status(tmp_path):
     path = tmp_path / "data.json"
     client, tournament_id = _started_round_robin(
-        path, ["Águias", "Tigres", "Leões", "Lobos"],
+        path,
+        ["Águias", "Tigres", "Leões", "Lobos"],
     )
     document = _load(path)
     first_round = [m for m in document["matches"] if m["round"] == 1]
@@ -109,7 +115,8 @@ def test_matches_can_be_filtered_by_round_and_status(tmp_path):
 
 def test_filter_without_matches_shows_empty_state(tmp_path):
     client, tournament_id = _started_round_robin(
-        tmp_path / "data.json", ["Águias", "Tigres"],
+        tmp_path / "data.json",
+        ["Águias", "Tigres"],
     )
 
     html = client.get(
@@ -123,7 +130,8 @@ def test_filter_without_matches_shows_empty_state(tmp_path):
 
 def test_invalid_filter_shows_portuguese_message(tmp_path):
     client, tournament_id = _started_round_robin(
-        tmp_path / "data.json", ["Águias", "Tigres"],
+        tmp_path / "data.json",
+        ["Águias", "Tigres"],
     )
 
     html = client.get(

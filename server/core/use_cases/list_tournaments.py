@@ -12,22 +12,31 @@ class ListTournaments:
         self._repository = repository
 
     def execute(
-        self, search: str = "", status: TournamentStatus | None = None,
+        self,
+        search: str = "",
+        status: TournamentStatus | None = None,
         order: str = "activity",
     ) -> list[Tournament]:
         query = normalize_name(search)
         tournaments = [
-            tournament for tournament in self._repository.list_all()
+            tournament
+            for tournament in self._repository.list_all()
             if (status is None or tournament.status is status)
             and query in normalize_name(tournament.name)
         ]
         if order == "name":
-            return sorted(tournaments, key=lambda item: normalize_name(item.name))
+            return sorted(
+                tournaments, key=lambda item: normalize_name(item.name)
+            )
         if order == "format":
-            return sorted(tournaments, key=lambda item: item.tournament_format.value)
+            return sorted(
+                tournaments, key=lambda item: item.tournament_format.value
+            )
         if order == "status":
             return sorted(tournaments, key=lambda item: item.status.value)
-        return sorted(tournaments, key=lambda item: item.last_activity, reverse=True)
+        return sorted(
+            tournaments, key=lambda item: item.last_activity, reverse=True
+        )
 
     def participant_counts(self) -> dict[str, int]:
         return self._repository.participant_counts()

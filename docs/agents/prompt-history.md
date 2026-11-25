@@ -179,3 +179,15 @@ Após a revisão obrigatória, corrigi o encerramento para rejeitar também part
 (Itens 2 e 3 da lista de pendências: documentar no README a aplicação de Clean Architecture e SOLID, e justificar o uso de IA para o bônus.)
 
 **O que foi feito:** O README passou a explicar o projeto para quem for avaliá-lo. A seção de arquitetura traz um diagrama das quatro camadas, uma tabela relacionando cada camada à sua pasta e responsabilidade, um comando que comprova que o core não importa Flask nem infraestrutura, e o fluxo de "criar equipe" seguido camada por camada. A seção de SOLID aponta cada princípio para arquivos reais, como o Strategy de início de torneio (`StartTournament`) para o princípio aberto/fechado e a `TeamParticipationQuery` para a segregação de interfaces. Também foi incluído o resumo dos 220 testes por camada. A seção de IA descreve a estratégia de desenvolvimento orientado a especificação (`AGENTS.md`, spec, issues com DAG, TDD, decisões de negócio tomadas pelo grupo, revisão por PR e histórico de prompts), as ferramentas usadas em cada issue e por que essa estratégia foi adotada. Só foram descritos comportamentos conferidos no código; os 33 links do README apontam para arquivos existentes.
+
+## 013 — Conformidade com a PEP 8 usando Ruff
+
+**Data:** 2026-11-25
+**Ferramenta:** Claude Code (Claude Opus 5.5)
+**Branch:** `pep8-ruff`
+
+**Prompt:**
+
+> (Pedido do grupo para corrigir as violações de PEP 8, usando Ruff ou Black.)
+
+**O que foi feito:** Foi adicionado o `ruff.toml`, com limite de 79 caracteres por linha (o padrão do Ruff e do Black é 88, acima do que a PEP 8 permite) e as regras `E`/`W` do pycodestyle. O `ruff format` reformatou 46 arquivos e resolveu 70 das 78 violações. As restantes foram corrigidas à mão: mensagens longas quebradas por concatenação implícita, sem mudar o texto exibido ao usuário; um nome de teste e uma docstring encurtados; e duas fatias reescritas sem `:` (`str.removeprefix` e indexação direta), com comportamento idêntico, porque o pycodestyle (E203) e o formatador discordam sobre o espaço antes do `:`. Resultado: zero violações no `pycodestyle`, `ruff check` e `ruff format --check`, 220 testes passando e o fluxo completo dos dois formatos verificado pelo app sem falhas. O README ganhou a seção "Estilo de código (PEP 8)". Os arquivos Markdown foram excluídos do Ruff, porque o formatador alterava os exemplos de código do `AGENTS.md`.

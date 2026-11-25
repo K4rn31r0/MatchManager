@@ -19,8 +19,14 @@ from server.core.use_cases.get_team import GetTeam
 from server.core.use_cases.get_tournament import GetTournament
 from server.core.use_cases.list_teams import ListTeams
 from server.core.use_cases.team_data import TeamData
-from server.core.use_cases.tournament_registrations import TournamentRegistrations
-from tests.fakes import FakeClock, InMemoryTeamRepository, SequentialIdGenerator
+from server.core.use_cases.tournament_registrations import (
+    TournamentRegistrations,
+)
+from tests.fakes import (
+    FakeClock,
+    InMemoryTeamRepository,
+    SequentialIdGenerator,
+)
 
 
 class InMemoryRegistrations:
@@ -68,7 +74,9 @@ def setup(tournament_repository):
     return use_cases, teams, existing, first, second
 
 
-def test_team_can_join_multiple_tournaments_but_only_once_per_tournament(setup):
+def test_team_can_join_multiple_tournaments_but_only_once_per_tournament(
+    setup,
+):
     use_cases, _, team, first, second = setup
     use_cases.add(first.id, team.id)
     assert use_cases.list(second.id).available == [team]
@@ -80,7 +88,9 @@ def test_team_can_join_multiple_tournaments_but_only_once_per_tournament(setup):
     assert use_cases.list(second.id).registered == [team]
 
 
-def test_create_and_register_reuses_team_validation_and_updates_both_lists(setup):
+def test_create_and_register_reuses_team_validation_and_updates_both_lists(
+    setup,
+):
     use_cases, teams, existing, first, second = setup
     with pytest.raises(DuplicateTeamNameError):
         use_cases.create_and_add(first.id, TeamData(name="AGUIAS"))
@@ -115,7 +125,9 @@ def test_add_rejects_unknown_team(setup):
     "status", [TournamentStatus.IN_PROGRESS, TournamentStatus.FINISHED]
 )
 def test_started_tournament_rejects_all_registration_changes(
-    setup, tournament_repository, status,
+    setup,
+    tournament_repository,
+    status,
 ):
     use_cases, teams, team, first, _ = setup
     use_cases.add(first.id, team.id)

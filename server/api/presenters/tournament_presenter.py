@@ -40,7 +40,8 @@ class TournamentViewModel:
 
 
 def present_tournament(
-    tournament: Tournament, participant_count: int = 0,
+    tournament: Tournament,
+    participant_count: int = 0,
 ) -> TournamentViewModel:
     return TournamentViewModel(
         id=tournament.id,
@@ -57,7 +58,8 @@ def present_tournament(
 
 
 def present_tournaments(
-    tournaments: list[Tournament], counts: dict[str, int],
+    tournaments: list[Tournament],
+    counts: dict[str, int],
 ) -> list[TournamentViewModel]:
     return [
         present_tournament(tournament, counts.get(tournament.id, 0))

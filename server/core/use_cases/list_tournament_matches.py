@@ -20,10 +20,9 @@ class MatchFilter:
 
     def accepts(self, match: Match) -> bool:
         return (
-            (self.round_number is None
-             or match.round_number == self.round_number)
-            and (self.status is None or match.status is self.status)
-        )
+            self.round_number is None
+            or match.round_number == self.round_number
+        ) and (self.status is None or match.status is self.status)
 
 
 @dataclass(frozen=True)
@@ -58,7 +57,9 @@ class ListTournamentMatches:
         every_match = sorted(
             self._matches.list_for_tournament(tournament_id),
             key=lambda match: (
-                match.round_number, match.bracket_position or 0, match.id,
+                match.round_number,
+                match.bracket_position or 0,
+                match.id,
             ),
         )
         return TournamentMatches(

@@ -42,7 +42,9 @@ class RoundViewModel:
 
 
 def round_label(
-    tournament_format: TournamentFormat, number: int, round_count: int,
+    tournament_format: TournamentFormat,
+    number: int,
+    round_count: int,
 ) -> str:
     """Name a round: "Rodada 2" (round-robin) or "Fase 2 · Final"."""
     if tournament_format is TournamentFormat.ROUND_ROBIN:
@@ -71,9 +73,12 @@ def present_rounds(
             label=round_label(tournament_format, number, round_count),
             matches=tuple(items),
             bye_names=(
-                tuple(team_names.get(team_id, team_id)
-                      for team_id in first_round_byes)
-                if number == 1 else ()
+                tuple(
+                    team_names.get(team_id, team_id)
+                    for team_id in first_round_byes
+                )
+                if number == 1
+                else ()
             ),
         )
         for number, items in grouped.items()

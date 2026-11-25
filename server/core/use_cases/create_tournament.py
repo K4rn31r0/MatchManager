@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from server.core.entities.tournament import Tournament, TournamentFormat
-from server.core.use_cases.tournament_name_availability import ensure_name_available
+from server.core.use_cases.tournament_name_availability import (
+    ensure_name_available,
+)
 from server.core.interfaces.tournament_repository import TournamentRepository
 
 

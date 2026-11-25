@@ -28,12 +28,16 @@ def test_update_team_changes_every_field(update_team, team_repository):
         ),
     )
 
-    assert team_repository.get("e1") == updated == Team(
-        id="e1",
-        name="Fluminense",
-        abbreviation="FLU",
-        color="#7a0019",
-        notes="Tricolor carioca",
+    assert (
+        team_repository.get("e1")
+        == updated
+        == Team(
+            id="e1",
+            name="Fluminense",
+            abbreviation="FLU",
+            color="#7a0019",
+            notes="Tricolor carioca",
+        )
     )
 
 

@@ -43,7 +43,8 @@ class JsonTournamentRepository(TournamentRepository):
         document = self._storage.read()
         document[_COLLECTION] = [
             {**record, **_to_record(tournament)}
-            if record["id"] == tournament.id else record
+            if record["id"] == tournament.id
+            else record
             for record in document.get(_COLLECTION, [])
         ]
         self._storage.write(document)
@@ -57,7 +58,8 @@ class JsonTournamentRepository(TournamentRepository):
         ):
             if collection in document:
                 document[collection] = [
-                    record for record in document[collection]
+                    record
+                    for record in document[collection]
                     if record[key] != tournament_id
                 ]
         self._storage.write(document)
@@ -131,7 +133,8 @@ def _from_record(record: dict[str, Any]) -> Tournament:
                 for name in round_robin_record.get("statistic_fields", [])
             ),
         )
-        if round_robin_record is not None else None
+        if round_robin_record is not None
+        else None
     )
     knockout_record = record.get("knockout")
     knockout = (
@@ -141,7 +144,8 @@ def _from_record(record: dict[str, Any]) -> Tournament:
             bye_strategy=KnockoutByeStrategy(knockout_record["bye_strategy"]),
             bye_team_ids=tuple(knockout_record["bye_team_ids"]),
         )
-        if knockout_record is not None else None
+        if knockout_record is not None
+        else None
     )
     return Tournament(
         id=record["id"],
@@ -151,7 +155,8 @@ def _from_record(record: dict[str, Any]) -> Tournament:
         created_at=datetime.fromisoformat(record["created_at"]),
         updated_at=(
             datetime.fromisoformat(record["updated_at"])
-            if record.get("updated_at") else None
+            if record.get("updated_at")
+            else None
         ),
         modality=record.get("modality"),
         start_date=_text_to_date(record.get("start_date")),

@@ -21,6 +21,16 @@ Acesse http://127.0.0.1:5000. Os dados ficam em `instance/matchmanager.json`, cr
 pytest
 ```
 
+## Estilo de código (PEP 8)
+
+O código segue a PEP 8, com linhas de até 79 caracteres. A formatação e a verificação usam o [Ruff](https://docs.astral.sh/ruff/), configurado em [`ruff.toml`](ruff.toml):
+
+```bash
+pip install ruff
+ruff format .     # formata o código
+ruff check .      # verifica as regras da PEP 8
+```
+
 ---
 
 ## Arquitetura: Clean Architecture

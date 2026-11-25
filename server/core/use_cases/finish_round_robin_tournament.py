@@ -35,7 +35,8 @@ class FinishRoundRobinTournament:
         ]
         if pending:
             raise InvalidTournamentError(
-                "Não é possível encerrar: existem partidas pendentes ou sem resultado válido."
+                "Não é possível encerrar: existem partidas pendentes ou "
+                "sem resultado válido."
             )
         finished = tournament.finish_round_robin(self._clock())
         self._repository.update(finished)

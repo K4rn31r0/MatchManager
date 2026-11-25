@@ -34,7 +34,8 @@ class InMemoryMatches:
 
     def replace_for_tournament(self, tournament_id, matches):
         for match_id in [
-            key for key, match in self.items.items()
+            key
+            for key, match in self.items.items()
             if match.tournament_id == tournament_id
         ]:
             del self.items[match_id]
@@ -46,7 +47,8 @@ class InMemoryMatches:
 
     def list_for_tournament(self, tournament_id):
         return [
-            match for match in self.items.values()
+            match
+            for match in self.items.values()
             if match.tournament_id == tournament_id
         ]
 
@@ -178,26 +180,28 @@ def test_calculation_applies_points_and_alphabetical_final_tiebreak():
     tournament = make_tournament()
     tournament_repository.add(tournament)
     teams = make_teams()
-    matches = InMemoryMatches([
-        Match(
-            id="m1",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="a",
-            second_team_id="b",
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.DRAW,
-        ),
-        Match(
-            id="m2",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="c",
-            second_team_id="b",
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.DRAW,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            Match(
+                id="m1",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="a",
+                second_team_id="b",
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.DRAW,
+            ),
+            Match(
+                id="m2",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="c",
+                second_team_id="b",
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.DRAW,
+            ),
+        ]
+    )
 
     standings = CalculateRoundRobinStandings(
         tournament_repository,
@@ -214,7 +218,7 @@ def test_calculation_applies_points_and_alphabetical_final_tiebreak():
     assert standings.rows[0].points == 2
 
 
-def test_calculation_aggregates_statistics_and_applies_positive_and_negative_criteria():
+def test_standings_aggregate_stats_and_apply_positive_and_negative_criteria():
     tournament_repository = InMemoryTournamentRepository()
     tournament = make_tournament()
     tournament = replace(
@@ -239,19 +243,21 @@ def test_calculation_aggregates_statistics_and_applies_positive_and_negative_cri
     )
     tournament_repository.add(tournament)
     teams = make_teams()
-    matches = InMemoryMatches([
-        Match(
-            id="m1",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="a",
-            second_team_id="b",
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.FIRST_WIN,
-            first_team_stats={"Gols": 2, "Faltas": 5},
-            second_team_stats={"Gols": 0, "Faltas": 2},
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            Match(
+                id="m1",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="a",
+                second_team_id="b",
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.FIRST_WIN,
+                first_team_stats={"Gols": 2, "Faltas": 5},
+                second_team_stats={"Gols": 0, "Faltas": 2},
+            ),
+        ]
+    )
 
     standings = CalculateRoundRobinStandings(
         tournament_repository,
@@ -270,15 +276,17 @@ def test_calculation_aggregates_statistics_and_applies_positive_and_negative_cri
 def test_finish_round_robin_rejects_pending_match():
     tournament_repository = InMemoryTournamentRepository()
     tournament_repository.add(make_tournament())
-    matches = InMemoryMatches([
-        Match(
-            id="m1",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="a",
-            second_team_id="b",
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            Match(
+                id="m1",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="a",
+                second_team_id="b",
+            ),
+        ]
+    )
 
     with pytest.raises(InvalidTournamentError, match="pendentes"):
         FinishRoundRobinTournament(
@@ -290,17 +298,19 @@ def test_finish_round_robin_rejects_pending_match():
 def test_finish_round_robin_sets_finished_and_exposes_leader():
     tournament_repository = InMemoryTournamentRepository()
     tournament_repository.add(make_tournament())
-    matches = InMemoryMatches([
-        Match(
-            id="m1",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="a",
-            second_team_id="b",
-            status=MatchStatus.COMPLETED,
-            result=MatchResult.FIRST_WIN,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            Match(
+                id="m1",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="a",
+                second_team_id="b",
+                status=MatchStatus.COMPLETED,
+                result=MatchResult.FIRST_WIN,
+            ),
+        ]
+    )
 
     finished = FinishRoundRobinTournament(
         tournament_repository,
@@ -313,17 +323,19 @@ def test_finish_round_robin_sets_finished_and_exposes_leader():
 def test_finish_round_robin_rejects_completed_match_without_result():
     tournament_repository = InMemoryTournamentRepository()
     tournament_repository.add(make_tournament())
-    matches = InMemoryMatches([
-        Match(
-            id="m1",
-            tournament_id="t1",
-            round_number=1,
-            first_team_id="a",
-            second_team_id="b",
-            status=MatchStatus.COMPLETED,
-            result=None,
-        ),
-    ])
+    matches = InMemoryMatches(
+        [
+            Match(
+                id="m1",
+                tournament_id="t1",
+                round_number=1,
+                first_team_id="a",
+                second_team_id="b",
+                status=MatchStatus.COMPLETED,
+                result=None,
+            ),
+        ]
+    )
 
     with pytest.raises(InvalidTournamentError, match="resultado válido"):
         FinishRoundRobinTournament(

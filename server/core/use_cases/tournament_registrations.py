@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from server.core.entities.team import Team
 from server.core.entities.tournament import Tournament
 from server.core.errors import DomainError
-from server.core.interfaces.registration_repository import RegistrationRepository
+from server.core.interfaces.registration_repository import (
+    RegistrationRepository,
+)
 from server.core.use_cases.create_team import CreateTeam
 from server.core.use_cases.get_team import GetTeam
 from server.core.use_cases.get_tournament import GetTournament
@@ -44,7 +46,9 @@ class TournamentRegistrations:
         return TournamentTeams(
             tournament=tournament,
             registered=[team for team in teams if team.id in registered_ids],
-            available=[team for team in teams if team.id not in registered_ids],
+            available=[
+                team for team in teams if team.id not in registered_ids
+            ],
         )
 
     def add(self, tournament_id: str, team_id: str) -> None:

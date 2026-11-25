@@ -28,13 +28,17 @@ def data(name):
 @pytest.fixture
 def seeded(tournament_repository):
     clock = FakeClock()
-    create = CreateTournament(tournament_repository, SequentialIdGenerator(), clock)
+    create = CreateTournament(
+        tournament_repository, SequentialIdGenerator(), clock
+    )
     copa = create.execute(data("Copa São João"))
     liga = create.execute(data("Liga"))
     return copa, liga, clock
 
 
-def test_update_keeps_identity_and_changes_order(tournament_repository, seeded):
+def test_update_keeps_identity_and_changes_order(
+    tournament_repository, seeded
+):
     copa, liga, clock = seeded
     updated = UpdateTournament(tournament_repository, clock).execute(
         copa.id, data("  COPA São João  ")
@@ -45,7 +49,9 @@ def test_update_keeps_identity_and_changes_order(tournament_repository, seeded):
     assert ListTournaments(tournament_repository).execute() == [updated, liga]
 
 
-def test_update_rejects_name_used_by_another_tournament(tournament_repository, seeded):
+def test_update_rejects_name_used_by_another_tournament(
+    tournament_repository, seeded
+):
     copa, liga, clock = seeded
     with pytest.raises(DuplicateTournamentNameError):
         UpdateTournament(tournament_repository, clock).execute(
@@ -54,29 +60,44 @@ def test_update_rejects_name_used_by_another_tournament(tournament_repository, s
     assert GetTournament(tournament_repository).execute(liga.id) == liga
 
 
-@pytest.mark.parametrize("status", [TournamentStatus.IN_PROGRESS, TournamentStatus.FINISHED])
-def test_update_rejects_started_tournament(tournament_repository, seeded, status):
+@pytest.mark.parametrize(
+    "status", [TournamentStatus.IN_PROGRESS, TournamentStatus.FINISHED]
+)
+def test_update_rejects_started_tournament(
+    tournament_repository, seeded, status
+):
     copa, _, clock = seeded
     started = replace(copa, status=status)
     tournament_repository.update(started)
     with pytest.raises(InvalidTournamentError):
-        UpdateTournament(tournament_repository, clock).execute(copa.id, data("Nova"))
+        UpdateTournament(tournament_repository, clock).execute(
+            copa.id, data("Nova")
+        )
     assert GetTournament(tournament_repository).execute(copa.id) == started
 
 
 @pytest.mark.parametrize("status", list(TournamentStatus))
-def test_list_combines_search_and_status(tournament_repository, seeded, status):
+def test_list_combines_search_and_status(
+    tournament_repository, seeded, status
+):
     copa, _, _ = seeded
     target = replace(copa, status=status)
     tournament_repository.update(target)
     listing = ListTournaments(tournament_repository)
     assert listing.execute(" SAO ", status) == [target]
     assert listing.execute("inexistente", status) == []
-    assert listing.execute("SAO", next(item for item in TournamentStatus if item != status)) == []
+    assert (
+        listing.execute(
+            "SAO", next(item for item in TournamentStatus if item != status)
+        )
+        == []
+    )
 
 
 @pytest.mark.parametrize("status", list(TournamentStatus))
-def test_delete_requires_confirmation_in_every_status(tournament_repository, seeded, status):
+def test_delete_requires_confirmation_in_every_status(
+    tournament_repository, seeded, status
+):
     copa, _, _ = seeded
     target = replace(copa, status=status)
     tournament_repository.update(target)

@@ -25,7 +25,9 @@ from server.core.use_cases.delete_team import DeleteTeam
 from server.core.use_cases.get_team import GetTeam
 from server.core.use_cases.list_teams import ListTeams
 from server.core.use_cases.list_tournaments import ListTournaments
-from server.core.use_cases.tournament_registrations import TournamentRegistrations
+from server.core.use_cases.tournament_registrations import (
+    TournamentRegistrations,
+)
 from server.core.use_cases.update_team import UpdateTeam
 from server.infrastructure.db.json_file_storage import JsonFileStorage
 from server.infrastructure.db.json_team_repository import JsonTeamRepository
@@ -37,10 +39,18 @@ from server.infrastructure.db.json_registration_repository import (
 )
 from server.infrastructure.db.json_match_repository import JsonMatchRepository
 from server.core.use_cases.configure_round_robin import ConfigureRoundRobin
-from server.core.use_cases.generate_round_robin_calendar import GenerateRoundRobinCalendar
-from server.core.use_cases.record_round_robin_result import RecordRoundRobinResult
-from server.core.use_cases.calculate_round_robin_standings import CalculateRoundRobinStandings
-from server.core.use_cases.finish_round_robin_tournament import FinishRoundRobinTournament
+from server.core.use_cases.generate_round_robin_calendar import (
+    GenerateRoundRobinCalendar,
+)
+from server.core.use_cases.record_round_robin_result import (
+    RecordRoundRobinResult,
+)
+from server.core.use_cases.calculate_round_robin_standings import (
+    CalculateRoundRobinStandings,
+)
+from server.core.use_cases.finish_round_robin_tournament import (
+    FinishRoundRobinTournament,
+)
 from server.core.use_cases.list_tournament_matches import ListTournamentMatches
 from server.core.use_cases.schedule_match import ScheduleMatch
 from server.core.use_cases.generate_knockout_bracket import (
@@ -108,8 +118,11 @@ def create_app(data_file: Path | None = None) -> Flask:
     )
 
     registrations = TournamentRegistrations(
-        registration_repository, get_tournament, get_team,
-        list_teams, create_team,
+        registration_repository,
+        get_tournament,
+        get_team,
+        list_teams,
+        create_team,
     )
 
     app.register_blueprint(create_registration_blueprint(registrations))
@@ -123,7 +136,9 @@ def create_app(data_file: Path | None = None) -> Flask:
             list_tournaments=ListTournaments(tournament_repository),
             get_tournament=get_tournament,
             registrations=registrations,
-            update_tournament=UpdateTournament(tournament_repository, datetime.now),
+            update_tournament=UpdateTournament(
+                tournament_repository, datetime.now
+            ),
             delete_tournament=DeleteTournament(tournament_repository),
             configure_round_robin=ConfigureRoundRobin(tournament_repository),
             generate_round_robin_calendar=generate_round_robin_calendar,

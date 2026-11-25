@@ -54,7 +54,8 @@ def test_match_schedule_round_trip_and_absent_fields(tmp_path):
     assert repository.get("m1").location is None
 
     scheduled = match.schedule(
-        scheduled_date=date(2026, 12, 5), location="Ginásio Central",
+        scheduled_date=date(2026, 12, 5),
+        location="Ginásio Central",
     )
     repository.update(scheduled)
 

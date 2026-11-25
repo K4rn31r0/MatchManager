@@ -44,7 +44,9 @@ class ConfigureRoundRobin:
     ) -> Tournament:
         tournament = self._get.execute(tournament_id)
         tie_breakers = tuple(
-            TieBreaker(name=name.strip(), direction=_parse_direction(direction))
+            TieBreaker(
+                name=name.strip(), direction=_parse_direction(direction)
+            )
             for name, direction in data.tie_breakers
             if name.strip()
         )

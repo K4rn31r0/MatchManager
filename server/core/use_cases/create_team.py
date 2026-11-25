@@ -33,7 +33,7 @@ class CreateTeam:
         return team
 
     def prepare(self, data: TeamData) -> Team:
-        """Validate and build a new team for a combined persistence operation."""
+        """Validate and build a team to be persisted with other data."""
         ensure_team_name_is_available(self._repository, data.name)
         return Team.create(
             id=self._id_generator(),

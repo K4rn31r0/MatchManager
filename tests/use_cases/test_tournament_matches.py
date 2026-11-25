@@ -33,8 +33,9 @@ def make_tournament(status=TournamentStatus.IN_PROGRESS, tournament_id="t1"):
     )
 
 
-def make_match(match_id, round_number, status=MatchStatus.PENDING,
-               tournament_id="t1"):
+def make_match(
+    match_id, round_number, status=MatchStatus.PENDING, tournament_id="t1"
+):
     return Match(
         id=match_id,
         tournament_id=tournament_id,
@@ -54,15 +55,21 @@ def repositories():
     tournaments.add(make_tournament())
     tournaments.add(make_tournament(tournament_id="other"))
     matches = InMemoryMatchRepository()
-    matches.replace_for_tournament("t1", [
-        make_match("m3", 2),
-        make_match("m1", 1, MatchStatus.COMPLETED),
-        make_match("m2", 1),
-        make_match("m4", 2, MatchStatus.COMPLETED),
-    ])
-    matches.replace_for_tournament("other", [
-        make_match("x1", 1, tournament_id="other"),
-    ])
+    matches.replace_for_tournament(
+        "t1",
+        [
+            make_match("m3", 2),
+            make_match("m1", 1, MatchStatus.COMPLETED),
+            make_match("m2", 1),
+            make_match("m4", 2, MatchStatus.COMPLETED),
+        ],
+    )
+    matches.replace_for_tournament(
+        "other",
+        [
+            make_match("x1", 1, tournament_id="other"),
+        ],
+    )
     return tournaments, matches
 
 
@@ -80,7 +87,8 @@ def test_list_matches_without_filter_orders_by_round(repositories):
 
 def test_list_matches_filters_by_round(repositories):
     result = ListTournamentMatches(*repositories).execute(
-        "t1", MatchFilter(round_number=2),
+        "t1",
+        MatchFilter(round_number=2),
     )
 
     assert ids(result) == ["m3", "m4"]
@@ -89,7 +97,8 @@ def test_list_matches_filters_by_round(repositories):
 
 def test_list_matches_filters_by_status(repositories):
     result = ListTournamentMatches(*repositories).execute(
-        "t1", MatchFilter(status=MatchStatus.PENDING),
+        "t1",
+        MatchFilter(status=MatchStatus.PENDING),
     )
 
     assert ids(result) == ["m2", "m3"]
@@ -108,7 +117,8 @@ def test_list_matches_combines_round_and_status(repositories):
 
 def test_list_matches_returns_empty_for_unknown_round(repositories):
     result = ListTournamentMatches(*repositories).execute(
-        "t1", MatchFilter(round_number=9),
+        "t1",
+        MatchFilter(round_number=9),
     )
 
     assert result.matches == ()
@@ -119,10 +129,13 @@ def test_list_matches_orders_knockout_phase_by_bracket_position():
     tournaments = InMemoryTournamentRepository()
     tournaments.add(make_tournament())
     matches = InMemoryMatchRepository()
-    matches.replace_for_tournament("t1", [
-        replace(make_match("b", 1), bracket_position=2),
-        replace(make_match("a", 1), bracket_position=1),
-    ])
+    matches.replace_for_tournament(
+        "t1",
+        [
+            replace(make_match("b", 1), bracket_position=2),
+            replace(make_match("a", 1), bracket_position=1),
+        ],
+    )
 
     result = ListTournamentMatches(tournaments, matches).execute("t1")
 
@@ -141,7 +154,8 @@ def test_schedule_match_sets_optional_date_and_location(repositories):
         "t1",
         "m2",
         MatchScheduleInput(
-            scheduled_date=date(2026, 12, 5), location="  Ginásio  ",
+            scheduled_date=date(2026, 12, 5),
+            location="  Ginásio  ",
         ),
     )
 
@@ -155,12 +169,15 @@ def test_schedule_match_clears_blank_values(repositories):
     tournaments, matches = repositories
     use_case = ScheduleMatch(tournaments, matches)
     use_case.execute(
-        "t1", "m2",
+        "t1",
+        "m2",
         MatchScheduleInput(scheduled_date=date(2026, 12, 5), location="X"),
     )
 
     cleared = use_case.execute(
-        "t1", "m2", MatchScheduleInput(scheduled_date=None, location="  "),
+        "t1",
+        "m2",
+        MatchScheduleInput(scheduled_date=None, location="  "),
     )
 
     assert cleared.scheduled_date is None
@@ -171,7 +188,9 @@ def test_schedule_does_not_change_a_recorded_result(repositories):
     tournaments, matches = repositories
 
     scheduled = ScheduleMatch(tournaments, matches).execute(
-        "t1", "m1", MatchScheduleInput(location="Estádio"),
+        "t1",
+        "m1",
+        MatchScheduleInput(location="Estádio"),
     )
 
     assert scheduled.status is MatchStatus.COMPLETED
@@ -195,7 +214,8 @@ def test_result_can_be_recorded_without_date_or_location():
 
 def test_recording_result_keeps_the_schedule():
     match = make_match("m1", 1).schedule(
-        scheduled_date=date(2026, 12, 5), location="Estádio",
+        scheduled_date=date(2026, 12, 5),
+        location="Estádio",
     )
 
     recorded = match.record_result(
@@ -216,7 +236,9 @@ def test_schedule_match_rejects_draft_tournament(repositories):
 
     with pytest.raises(InvalidTournamentError, match="iniciados"):
         ScheduleMatch(tournaments, matches).execute(
-            "t1", "m2", MatchScheduleInput(location="Estádio"),
+            "t1",
+            "m2",
+            MatchScheduleInput(location="Estádio"),
         )
 
     assert matches.get("m2").location is None
@@ -227,5 +249,7 @@ def test_schedule_match_rejects_match_from_another_tournament(repositories):
 
     with pytest.raises(InvalidTournamentError, match="Partida não encontrada"):
         ScheduleMatch(tournaments, matches).execute(
-            "t1", "x1", MatchScheduleInput(location="Estádio"),
+            "t1",
+            "x1",
+            MatchScheduleInput(location="Estádio"),
         )

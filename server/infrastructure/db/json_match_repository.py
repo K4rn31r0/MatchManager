@@ -18,7 +18,8 @@ class JsonMatchRepository:
     ) -> None:
         document = self._storage.read()
         remaining = [
-            record for record in document.get("matches", [])
+            record
+            for record in document.get("matches", [])
             if record.get("tournament_id") != tournament_id
         ]
         document["matches"] = remaining + [
@@ -101,7 +102,8 @@ def _from_record(record: dict[str, Any]) -> Match | None:
         status=MatchStatus(record["status"]),
         result=(
             MatchResult(record["result"])
-            if record.get("result") is not None else None
+            if record.get("result") is not None
+            else None
         ),
         first_score=record.get("first_score"),
         second_score=record.get("second_score"),
@@ -109,7 +111,8 @@ def _from_record(record: dict[str, Any]) -> Match | None:
         second_team_stats=record.get("second_team_stats"),
         scheduled_date=(
             date.fromisoformat(record["scheduled_date"])
-            if record.get("scheduled_date") else None
+            if record.get("scheduled_date")
+            else None
         ),
         location=record.get("location"),
     )

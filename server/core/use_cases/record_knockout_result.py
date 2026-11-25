@@ -43,9 +43,7 @@ class RecordKnockoutResult:
         if match is None or match.tournament_id != tournament_id:
             raise InvalidTournamentError("Partida não encontrada.")
         if data.result not in (MatchResult.FIRST_WIN, MatchResult.SECOND_WIN):
-            raise InvalidTournamentError(
-                "Informe o vencedor da partida."
-            )
+            raise InvalidTournamentError("Informe o vencedor da partida.")
         tournament_matches = self._matches.list_for_tournament(tournament_id)
         next_match = self._find_next_match(
             tournament,
@@ -115,7 +113,8 @@ class RecordKnockoutResult:
             return None
         next_position = (match.bracket_position + 1) // 2
         next_matches = [
-            item for item in tournament_matches
+            item
+            for item in tournament_matches
             if (
                 item.round_number == match.round_number + 1
                 and item.bracket_position == next_position

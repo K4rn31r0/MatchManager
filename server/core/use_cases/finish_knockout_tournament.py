@@ -3,7 +3,10 @@
 from collections.abc import Callable
 from datetime import datetime
 
-from server.core.entities.knockout_bracket import bracket_size, knockout_round_count
+from server.core.entities.knockout_bracket import (
+    bracket_size,
+    knockout_round_count,
+)
 from server.core.entities.match import MatchResult, MatchStatus
 from server.core.entities.tournament import (
     Tournament,
@@ -46,7 +49,8 @@ class FinishKnockoutTournament:
         matches = self._matches.list_for_tournament(tournament_id)
         if any(
             match.status is not MatchStatus.COMPLETED
-            or match.result not in (
+            or match.result
+            not in (
                 MatchResult.FIRST_WIN,
                 MatchResult.SECOND_WIN,
             )
@@ -59,8 +63,7 @@ class FinishKnockoutTournament:
 
         final_round = knockout_round_count(len(config.initial_order))
         final_matches = [
-            match for match in matches
-            if match.round_number == final_round
+            match for match in matches if match.round_number == final_round
         ]
         if (
             final_round == 0

@@ -123,7 +123,9 @@ class Lifecycle:
         )
 
     def generate_manual_bracket(
-        self, tournament_id: str, team_ids: list[str],
+        self,
+        tournament_id: str,
+        team_ids: list[str],
     ) -> None:
         self.generate_knockout_bracket.execute(
             tournament_id,
@@ -138,19 +140,27 @@ class Lifecycle:
         return self.tournaments.get(tournament_id).status
 
     def match_between(
-        self, tournament_id: str, first_id: str, second_id: str,
+        self,
+        tournament_id: str,
+        first_id: str,
+        second_id: str,
     ) -> Match:
         return next(
-            match for match in self.matches.list_for_tournament(tournament_id)
+            match
+            for match in self.matches.list_for_tournament(tournament_id)
             if {match.first_team_id, match.second_team_id}
             == {first_id, second_id}
         )
 
     def knockout_match(
-        self, tournament_id: str, round_number: int, position: int,
+        self,
+        tournament_id: str,
+        round_number: int,
+        position: int,
     ) -> Match:
         return next(
-            match for match in self.matches.list_for_tournament(tournament_id)
+            match
+            for match in self.matches.list_for_tournament(tournament_id)
             if match.round_number == round_number
             and match.bracket_position == position
         )
@@ -163,10 +173,15 @@ class Lifecycle:
         )
 
     def play_knockout(
-        self, tournament_id: str, match: Match, result: MatchResult,
+        self,
+        tournament_id: str,
+        match: Match,
+        result: MatchResult,
     ) -> None:
         self.record_knockout_result.execute(
-            tournament_id, match.id, KnockoutResultInput(result=result),
+            tournament_id,
+            match.id,
+            KnockoutResultInput(result=result),
         )
 
 
@@ -179,7 +194,9 @@ def lifecycle() -> Lifecycle:
     clock = FakeClock()
     create_team = CreateTeam(teams, SequentialIdGenerator("team"))
     generate_calendar = GenerateRoundRobinCalendar(
-        tournaments, registrations_repository, matches,
+        tournaments,
+        registrations_repository,
+        matches,
     )
     return Lifecycle(
         tournaments=tournaments,
@@ -192,7 +209,9 @@ def lifecycle() -> Lifecycle:
             create_team,
         ),
         create_tournament=CreateTournament(
-            tournaments, SequentialIdGenerator(), clock,
+            tournaments,
+            SequentialIdGenerator(),
+            clock,
         ),
         create_team=create_team,
         update_tournament=UpdateTournament(tournaments, clock),
@@ -209,21 +228,31 @@ def lifecycle() -> Lifecycle:
             tournaments,
             {
                 TournamentFormat.ROUND_ROBIN: StartRoundRobinTournament(
-                    tournaments, generate_calendar, clock,
+                    tournaments,
+                    generate_calendar,
+                    clock,
                 ),
                 TournamentFormat.KNOCKOUT: StartKnockoutTournament(
-                    tournaments, registrations_repository, matches, clock,
+                    tournaments,
+                    registrations_repository,
+                    matches,
+                    clock,
                 ),
             },
         ),
         record_round_robin_result=RecordRoundRobinResult(tournaments, matches),
         record_knockout_result=RecordKnockoutResult(tournaments, matches),
         standings=CalculateRoundRobinStandings(
-            tournaments, teams, registrations_repository, matches,
+            tournaments,
+            teams,
+            registrations_repository,
+            matches,
         ),
         get_knockout_bracket=GetKnockoutBracket(tournaments, matches),
         finish_round_robin=FinishRoundRobinTournament(
-            tournaments, matches, clock,
+            tournaments,
+            matches,
+            clock,
         ),
         finish_knockout=FinishKnockoutTournament(tournaments, matches, clock),
     )
@@ -247,7 +276,9 @@ def started_knockout(lifecycle: Lifecycle, *names: str):
 
 def finished_round_robin(lifecycle: Lifecycle):
     tournament_id, team_ids = started_round_robin(
-        lifecycle, "Águias", "Tigres",
+        lifecycle,
+        "Águias",
+        "Tigres",
     )
     match = lifecycle.matches.list_for_tournament(tournament_id)[0]
     lifecycle.record_first_win(tournament_id, match)
@@ -271,7 +302,8 @@ def finished_knockout(lifecycle: Lifecycle):
     [TournamentFormat.ROUND_ROBIN, TournamentFormat.KNOCKOUT],
 )
 def test_start_tournament_requires_at_least_two_teams(
-    lifecycle, tournament_format,
+    lifecycle,
+    tournament_format,
 ):
     tournament_id = lifecycle.new_tournament(tournament_format)
     lifecycle.register(tournament_id, "Águias")
@@ -324,7 +356,11 @@ def test_start_round_robin_generates_every_match_and_sets_in_progress(
     lifecycle,
 ):
     tournament_id, _ = started_round_robin(
-        lifecycle, "Águias", "Tigres", "Leões", "Lobos",
+        lifecycle,
+        "Águias",
+        "Tigres",
+        "Leões",
+        "Lobos",
     )
 
     assert lifecycle.status(tournament_id) is TournamentStatus.IN_PROGRESS
@@ -349,7 +385,11 @@ def test_start_round_robin_regenerates_calendar_previewed_in_draft(
 
 def test_start_knockout_keeps_the_generated_bracket(lifecycle):
     tournament_id, _ = started_knockout(
-        lifecycle, "Águias", "Tigres", "Leões", "Lobos",
+        lifecycle,
+        "Águias",
+        "Tigres",
+        "Leões",
+        "Lobos",
     )
 
     assert lifecycle.status(tournament_id) is TournamentStatus.IN_PROGRESS
@@ -365,7 +405,8 @@ def test_start_closes_registrations(lifecycle, starter):
         lifecycle.registrations.add(tournament_id, outsider.id)
     with pytest.raises(InvalidTournamentError, match="inscrições"):
         lifecycle.registrations.create_and_add(
-            tournament_id, TeamData(name="Lobos"),
+            tournament_id,
+            TeamData(name="Lobos"),
         )
     with pytest.raises(InvalidTournamentError, match="inscrições"):
         lifecycle.registrations.remove(tournament_id, team_ids[0])
@@ -396,7 +437,8 @@ def test_start_tournament_rejects_format_without_starter(lifecycle):
 
 
 @pytest.mark.parametrize(
-    "prepare", [started_round_robin, lambda lc, *_: finished_round_robin(lc)],
+    "prepare",
+    [started_round_robin, lambda lc, *_: finished_round_robin(lc)],
     ids=["in_progress", "finished"],
 )
 def test_round_robin_configuration_is_locked_after_start(lifecycle, prepare):
@@ -435,7 +477,8 @@ def test_round_robin_configuration_is_locked_after_start(lifecycle, prepare):
 
 
 @pytest.mark.parametrize(
-    "prepare", [started_knockout, lambda lc, *_: finished_knockout(lc)],
+    "prepare",
+    [started_knockout, lambda lc, *_: finished_knockout(lc)],
     ids=["in_progress", "finished"],
 )
 def test_knockout_structure_is_locked_after_start(lifecycle, prepare):
@@ -444,14 +487,16 @@ def test_knockout_structure_is_locked_after_start(lifecycle, prepare):
 
     with pytest.raises(InvalidTournamentError, match="rascunho"):
         lifecycle.generate_manual_bracket(
-            tournament_id, list(reversed(team_ids)),
+            tournament_id,
+            list(reversed(team_ids)),
         )
 
     assert lifecycle.tournaments.get(tournament_id).knockout == config_before
 
 
 @pytest.mark.parametrize(
-    "finisher", [finished_round_robin, finished_knockout],
+    "finisher",
+    [finished_round_robin, finished_knockout],
 )
 def test_finished_tournament_keeps_registrations_closed(lifecycle, finisher):
     tournament_id, _ = finisher(lifecycle)
@@ -493,7 +538,9 @@ def test_knockout_result_is_rejected_before_start(lifecycle):
 
 def test_round_robin_correction_in_progress_recalculates_standings(lifecycle):
     tournament_id, (eagles, tigers) = started_round_robin(
-        lifecycle, "Águias", "Tigres",
+        lifecycle,
+        "Águias",
+        "Tigres",
     )
     match = lifecycle.match_between(tournament_id, eagles, tigers)
     lifecycle.record_round_robin_result.execute(
@@ -563,7 +610,8 @@ def test_invalid_round_robin_correction_keeps_previous_result(lifecycle):
             tournament_id,
             match.id,
             RoundRobinResultInput(
-                result=MatchResult.SECOND_WIN, first_score=1,
+                result=MatchResult.SECOND_WIN,
+                first_score=1,
             ),
         )
 
@@ -593,7 +641,9 @@ def test_knockout_correction_allowed_while_dependent_match_is_pending(
     quarter_final = lifecycle.knockout_match(tournament_id, 1, 1)
 
     lifecycle.play_knockout(
-        tournament_id, quarter_final, MatchResult.SECOND_WIN,
+        tournament_id,
+        quarter_final,
+        MatchResult.SECOND_WIN,
     )
 
     semi_final = lifecycle.knockout_match(tournament_id, 2, 1)
@@ -678,7 +728,10 @@ def test_knockout_correction_after_finish_blocked_before_the_final(
 
 def test_round_robin_finish_blocked_while_a_match_is_pending(lifecycle):
     tournament_id, _ = started_round_robin(
-        lifecycle, "Águias", "Tigres", "Leões",
+        lifecycle,
+        "Águias",
+        "Tigres",
+        "Leões",
     )
     matches = lifecycle.matches.list_for_tournament(tournament_id)
     for match in matches[:-1]:
@@ -729,7 +782,9 @@ def test_draft_tournament_cannot_be_finished(lifecycle):
     ],
 )
 def test_finished_tournament_cannot_be_finished_again(
-    lifecycle, finisher, finish_name,
+    lifecycle,
+    finisher,
+    finish_name,
 ):
     tournament_id, _ = finisher(lifecycle)
 

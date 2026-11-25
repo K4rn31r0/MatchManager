@@ -38,12 +38,14 @@ class Match:
     @property
     def has_teams(self) -> bool:
         return (
-            self.first_team_id is not None
-            and self.second_team_id is not None
+            self.first_team_id is not None and self.second_team_id is not None
         )
 
     def schedule(
-        self, *, scheduled_date: date | None, location: str | None,
+        self,
+        *,
+        scheduled_date: date | None,
+        location: str | None,
     ) -> "Match":
         """Return the match with an optional date and location.
 
@@ -71,8 +73,10 @@ class Match:
             raise ValueError("placar completo")
         if first_score is not None and second_score is not None:
             inferred = (
-                MatchResult.FIRST_WIN if first_score > second_score
-                else MatchResult.SECOND_WIN if second_score > first_score
+                MatchResult.FIRST_WIN
+                if first_score > second_score
+                else MatchResult.SECOND_WIN
+                if second_score > first_score
                 else MatchResult.DRAW
             )
             if inferred is not result:

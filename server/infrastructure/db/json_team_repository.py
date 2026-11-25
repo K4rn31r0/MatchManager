@@ -43,7 +43,8 @@ class JsonTeamRepository(TeamRepository):
         ]
         if "registrations" in document:
             document["registrations"] = [
-                record for record in document["registrations"]
+                record
+                for record in document["registrations"]
                 if record["team_id"] != team_id
             ]
         self._storage.write(document)

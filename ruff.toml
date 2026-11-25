@@ -1,0 +1,11 @@
+# Ruff configuration: formatting and PEP 8 checks.
+# Run "ruff format ." to format and "ruff check ." to lint.
+
+# PEP 8 limits lines to 79 characters (Ruff/Black default to 88).
+line-length = 79
+target-version = "py311"
+extend-exclude = [".github", ".scratch", "*.md"]
+
+[lint]
+# E/W: pycodestyle (PEP 8) errors and warnings.
+select = ["E", "W"]

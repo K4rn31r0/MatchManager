@@ -11,7 +11,9 @@ from server.core.entities.tournament import (
 )
 from server.core.errors import InvalidTournamentError
 from server.core.interfaces.match_repository import MatchRepository
-from server.core.interfaces.registration_repository import RegistrationRepository
+from server.core.interfaces.registration_repository import (
+    RegistrationRepository,
+)
 from server.core.interfaces.tournament_repository import TournamentRepository
 from server.core.use_cases.get_tournament import GetTournament
 
@@ -53,7 +55,8 @@ class GenerateRoundRobinCalendar:
             )
         if tournament.tournament_format is not TournamentFormat.ROUND_ROBIN:
             raise InvalidTournamentError(
-                "O calendário de pontos corridos exige o formato correspondente."
+                "O calendário de pontos corridos exige o formato "
+                "correspondente."
             )
         if tournament.round_robin is None:
             raise InvalidTournamentError(

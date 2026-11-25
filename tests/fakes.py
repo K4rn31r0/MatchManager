@@ -102,7 +102,9 @@ class InMemoryMatchRepository(MatchRepository):
         self._matches: dict[str, Match] = {}
 
     def replace_for_tournament(
-        self, tournament_id: str, matches: list[Match],
+        self,
+        tournament_id: str,
+        matches: list[Match],
     ) -> None:
         self._matches = {
             match_id: match
@@ -117,7 +119,8 @@ class InMemoryMatchRepository(MatchRepository):
 
     def list_for_tournament(self, tournament_id: str) -> list[Match]:
         return [
-            match for match in self._matches.values()
+            match
+            for match in self._matches.values()
             if match.tournament_id == tournament_id
         ]
 

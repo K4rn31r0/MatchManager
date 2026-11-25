@@ -71,7 +71,9 @@ class GenerateKnockoutBracket:
             )
 
         initial_order = self._resolve_initial_order(
-            registered_ids, data.order_mode, data.initial_order,
+            registered_ids,
+            data.order_mode,
+            data.initial_order,
         )
         bye_count = bracket_size(len(initial_order)) - len(initial_order)
         bye_ids = self._resolve_byes(initial_order, bye_count, data)

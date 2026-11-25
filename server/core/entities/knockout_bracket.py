@@ -22,6 +22,7 @@ class KnockoutBracket:
 def bracket_size(team_count: int) -> int:
     return 1 << (team_count - 1).bit_length()
 
+
 def knockout_round_count(team_count: int) -> int:
     return bracket_size(team_count).bit_length() - 1
 
@@ -47,7 +48,8 @@ def build_knockout_bracket(
     first_round_byes: list[str] = []
     outcomes: list[str | None] = []
     for offset in range(0, size, 2):
-        first_team_id, second_team_id = slots[offset:offset + 2]
+        first_team_id = slots[offset]
+        second_team_id = slots[offset + 1]
         if first_team_id is not None and second_team_id is not None:
             first_round.append(
                 Match(
@@ -62,9 +64,7 @@ def build_knockout_bracket(
             outcomes.append(None)
         else:
             bye_team_id = (
-                first_team_id
-                if first_team_id is not None
-                else second_team_id
+                first_team_id if first_team_id is not None else second_team_id
             )
             if bye_team_id is not None:
                 first_round_byes.append(bye_team_id)

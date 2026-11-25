@@ -44,9 +44,7 @@ class RecordRoundRobinResult:
         if match is None or match.tournament_id != tournament_id:
             raise InvalidTournamentError("Partida não encontrada.")
         if data.result is None:
-            raise InvalidTournamentError(
-                "Informe vitória, empate ou derrota."
-            )
+            raise InvalidTournamentError("Informe vitória, empate ou derrota.")
         try:
             recorded = match.record_result(
                 result=data.result,

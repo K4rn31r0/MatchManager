@@ -5,9 +5,13 @@ from server.app import create_app
 
 def _create_tournament_with_teams(path, team_names):
     client = create_app(path).test_client()
-    assert client.post(
-        "/tournaments", data={"name": "Copa", "format": "knockout"},
-    ).status_code == 302
+    assert (
+        client.post(
+            "/tournaments",
+            data={"name": "Copa", "format": "knockout"},
+        ).status_code
+        == 302
+    )
     for name in team_names:
         assert client.post("/teams/", data={"name": name}).status_code == 302
 
@@ -16,9 +20,13 @@ def _create_tournament_with_teams(path, team_names):
     team_ids = [team["id"] for team in document["teams"]]
     registration_url = f"/tournaments/{tournament_id}/teams"
     for team_id in team_ids:
-        assert client.post(
-            registration_url, data={"team_id": team_id},
-        ).status_code == 302
+        assert (
+            client.post(
+                registration_url,
+                data={"team_id": team_id},
+            ).status_code
+            == 302
+        )
     return client, tournament_id, team_ids
 
 
@@ -27,7 +35,8 @@ def test_knockout_bracket_view_shows_rounds_and_automatically_advanced_bye(
 ):
     path = tmp_path / "data.json"
     client, tournament_id, team_ids = _create_tournament_with_teams(
-        path, ["Águias", "Tigres", "Leões"],
+        path,
+        ["Águias", "Tigres", "Leões"],
     )
     generation = {
         "order_mode": "manual",
@@ -62,7 +71,8 @@ def test_knockout_bracket_view_shows_rounds_and_automatically_advanced_bye(
 def test_knockout_start_route_rejects_missing_bracket(tmp_path):
     path = tmp_path / "data.json"
     client, tournament_id, _ = _create_tournament_with_teams(
-        path, ["Águias", "Tigres"],
+        path,
+        ["Águias", "Tigres"],
     )
 
     response = client.post(
@@ -78,15 +88,13 @@ def test_knockout_start_route_rejects_missing_bracket(tmp_path):
 def test_knockout_generation_rejects_duplicate_manual_positions(tmp_path):
     path = tmp_path / "data.json"
     client, tournament_id, team_ids = _create_tournament_with_teams(
-        path, ["Águias", "Tigres", "Leões"],
+        path,
+        ["Águias", "Tigres", "Leões"],
     )
     generation = {
         "order_mode": "manual",
         "bye_strategy": "performance",
-        **{
-            f"team_order_{team_id}": "1"
-            for team_id in team_ids
-        },
+        **{f"team_order_{team_id}": "1" for team_id in team_ids},
     }
 
     response = client.post(

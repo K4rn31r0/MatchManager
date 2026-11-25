@@ -60,13 +60,13 @@ class GetKnockoutBracket:
             rounds=tuple(
                 KnockoutRound(
                     number=number,
-                    matches=tuple(sorted(
-                        match_groups.get(number, []),
-                        key=lambda match: match.bracket_position or 0,
-                    )),
-                    bye_team_ids=(
-                        config.bye_team_ids if number == 1 else ()
+                    matches=tuple(
+                        sorted(
+                            match_groups.get(number, []),
+                            key=lambda match: match.bracket_position or 0,
+                        )
                     ),
+                    bye_team_ids=(config.bye_team_ids if number == 1 else ()),
                 )
                 for number in range(1, round_count + 1)
             ),

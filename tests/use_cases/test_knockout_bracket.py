@@ -91,7 +91,11 @@ def test_generated_bracket_keeps_order_and_advances_byes():
     assert sum(len(round_data.matches) for round_data in bracket.rounds) == 4
     assert len(matches.items) == 4
     assert tournaments.get("cup").knockout.initial_order == (
-        "e", "d", "c", "b", "a",
+        "e",
+        "d",
+        "c",
+        "b",
+        "a",
     )
 
 
@@ -163,12 +167,14 @@ def test_generated_bracket_has_valid_rounds_and_one_match_per_elimination(
     team_count,
 ):
     tournaments = InMemoryTournamentRepository()
-    tournaments.add(Tournament.create_draft(
-        id="cup",
-        name="Copa",
-        tournament_format=TournamentFormat.KNOCKOUT,
-        created_at=datetime(2026, 1, 1),
-    ))
+    tournaments.add(
+        Tournament.create_draft(
+            id="cup",
+            name="Copa",
+            tournament_format=TournamentFormat.KNOCKOUT,
+            created_at=datetime(2026, 1, 1),
+        )
+    )
     team_ids = tuple(f"team-{number}" for number in range(team_count))
     matches = InMemoryMatches()
     bracket = GenerateKnockoutBracket(
@@ -213,7 +219,9 @@ def test_start_rejects_tournament_without_a_valid_knockout_bracket():
 
     with pytest.raises(InvalidTournamentError, match="chaveamento"):
         StartKnockoutTournament(
-            tournaments, registrations, InMemoryMatches(),
+            tournaments,
+            registrations,
+            InMemoryMatches(),
         ).execute("cup")
 
     assert tournaments.get("cup").status.value == "draft"
@@ -244,7 +252,9 @@ def test_start_accepts_a_generated_bracket_and_changes_tournament_status():
     )
 
     started = StartKnockoutTournament(
-        tournaments, registrations, matches,
+        tournaments,
+        registrations,
+        matches,
     ).execute("cup")
 
     assert started.status.value == "in_progress"
@@ -278,7 +288,9 @@ def test_start_rejects_a_bracket_that_no_longer_matches_registrations():
 
     with pytest.raises(InvalidTournamentError, match="chaveamento"):
         StartKnockoutTournament(
-            tournaments, registrations, matches,
+            tournaments,
+            registrations,
+            matches,
         ).execute("cup")
 
     assert tournaments.get("cup").status.value == "draft"

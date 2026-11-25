@@ -101,16 +101,27 @@ class Tournament:
         return self.updated_at or self.created_at
 
     def edit(
-        self, *, name: str, tournament_format: TournamentFormat,
-        modality: str | None, start_date: date | None,
-        end_date: date | None, updated_at: datetime,
+        self,
+        *,
+        name: str,
+        tournament_format: TournamentFormat,
+        modality: str | None,
+        start_date: date | None,
+        end_date: date | None,
+        updated_at: datetime,
     ) -> "Tournament":
         if self.status is not TournamentStatus.DRAFT:
-            raise InvalidTournamentError("Só é possível editar torneios em rascunho.")
+            raise InvalidTournamentError(
+                "Só é possível editar torneios em rascunho."
+            )
         return replace(
-            self, name=name.strip(), tournament_format=tournament_format,
-            modality=optional_text(modality), start_date=start_date,
-            end_date=end_date, updated_at=updated_at,
+            self,
+            name=name.strip(),
+            tournament_format=tournament_format,
+            modality=optional_text(modality),
+            start_date=start_date,
+            end_date=end_date,
+            updated_at=updated_at,
         )
 
     def __post_init__(self) -> None:
@@ -175,7 +186,8 @@ class Tournament:
             )
         if not config.win_points > config.draw_points > config.loss_points:
             raise InvalidTournamentError(
-                "A pontuação deve respeitar vitória maior que empate maior que derrota."
+                "A pontuação deve respeitar vitória maior que empate "
+                "maior que derrota."
             )
         if not config.tie_breakers:
             raise InvalidTournamentError(
@@ -274,7 +286,8 @@ class Tournament:
             )
         if self.tournament_format is not TournamentFormat.ROUND_ROBIN:
             raise InvalidTournamentError(
-                "O encerramento solicitado não corresponde ao formato do torneio."
+                "O encerramento solicitado não corresponde ao formato "
+                "do torneio."
             )
         return replace(
             self,

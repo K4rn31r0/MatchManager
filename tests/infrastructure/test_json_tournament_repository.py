@@ -79,7 +79,10 @@ def test_round_robin_configuration_round_trips(tmp_path):
                     direction=TieBreakerDirection.NEGATIVE,
                 ),
             ),
-            statistic_fields=(StatisticField(name="Gols"), StatisticField(name="Cartões")),
+            statistic_fields=(
+                StatisticField(name="Gols"),
+                StatisticField(name="Cartões"),
+            ),
         ),
         updated_at=datetime(2026, 1, 1, 12, 31),
     )
